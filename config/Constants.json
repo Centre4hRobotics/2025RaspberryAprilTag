@@ -1,0 +1,7 @@
+{
+    "is table host": false,
+    "team number": 4027,
+    "fps": 30,
+    "camera profile": "640x480",
+    "tag poses": "config/TagPoses.json"
+}
