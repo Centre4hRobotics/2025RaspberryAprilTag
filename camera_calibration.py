@@ -1,19 +1,24 @@
 """ Represent cameras! """
 
 import json
+import dataclasses
 import numpy
+import cv2
 
+@dataclasses.dataclass
 class CameraCalibration:
+    # I see the pylint warning, but these are all so closely related that they should still be here.
+    """ Store camera calibration data """
     def __init__(self, profile):
         with open('config/CameraCalibration.json', encoding="utf-8") as file:
             calibration_data = json.load(file)
 
         camera_data = calibration_data[profile]
-        
-        self.fx = camera_data["Intrinsics"]["Fx"]
-        self.fy = camera_data["Intrinsics"]["Fy"]
-        self.cx = camera_data["Intrinsics"]["Cx"]
-        self.cy = camera_data["Intrinsics"]["Cy"]
+
+        fx = camera_data["Intrinsics"]["Fx"]
+        fy = camera_data["Intrinsics"]["Fy"]
+        cx = camera_data["Intrinsics"]["Cx"]
+        cy = camera_data["Intrinsics"]["Cy"]
 
         self.x_res = camera_data["Resolution"]["x"]
         self.y_res = camera_data["Resolution"]["y"]
@@ -23,9 +28,22 @@ class CameraCalibration:
             camera_data["Distortion"]["B"],
             camera_data["Distortion"]["C"],
             camera_data["Distortion"]["D"],
-            camera_data["Distortion"]["E"] ])
+            camera_data["Distortion"]["E"]
+        ]) # pyright: ignore[reportArgumentType]
         self.camera_intrinsics = numpy.eye(3)
-        self.camera_intrinsics[0][0] = self.fx
-        self.camera_intrinsics[1][1] = self.fy
-        self.camera_intrinsics[0][2] = self.cx
-        self.camera_intrinsics[1][2] = self.cy
+        self.camera_intrinsics[0][0] = fx
+        self.camera_intrinsics[1][1] = fy
+        self.camera_intrinsics[0][2] = cx
+        self.camera_intrinsics[1][2] = cy
+
+        match calibration_data["rotation"]:
+            case "90":
+                self.rotation = cv2.ROTATE_90_CLOCKWISE
+            case "180":
+                self.rotation = cv2.ROTATE_180
+            case "270":
+                self.rotation = cv2.ROTATE_90_COUNTERCLOCKWISE
+            case "-90":
+                self.rotation = cv2.ROTATE_90_COUNTERCLOCKWISE
+            case "0":
+                self.rotation = None

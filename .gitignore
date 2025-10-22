@@ -1,1 +1,3 @@
 networktables.json
+venv/
+.vscode/
