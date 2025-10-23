@@ -53,7 +53,7 @@ def main():
         tags = [apriltag.Apriltag(detection) for detection in detections]
 
         # Change tags based on whitelist/blacklist
-        tags = FILTER.verify_tags(tags)
+        tags = constants.verify_tags(FILTER, tags)
 
         if tags: # If there are tags to look at
             has_tag = True
@@ -74,14 +74,15 @@ def main():
             best_tag.draw_corners(cam.get_frame(), constants.colors.best_detection)
 
             # Calculate global pose
-            camera_pose = best_tag.global_pose.transformBy(best_tag.tag_to_camera)
-            robot_pose = camera_pose.transformBy(cam.offset)
+            if best_tag.global_pose:
+                camera_pose = best_tag.global_pose.transformBy(best_tag.tag_to_camera)
+                robot_pose = camera_pose.transformBy(cam.offset)
 
         # Publish everything to network tables
 
         output_stream.putFrame(cam.get_frame())
 
-        tables.set_values(
+        network_tables.set_values(tables,
             # General
             has_tag,
             robot_pose,

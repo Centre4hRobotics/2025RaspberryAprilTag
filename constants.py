@@ -16,6 +16,7 @@ class ListType(Enum):
     WHITELIST = 0
     BLACKLIST = 1
 
+@dataclasses.dataclass
 class List:
     """ Keep blacklist/whitelist in one place """
     def __init__(self, config):
@@ -35,10 +36,8 @@ class List:
             self.list = []
             self.type = ListType.BLACKLIST
 
-    def verify_tags(self, og_tags):
-        """ Remove filtered entries from a list. """
-        if self.type is ListType.WHITELIST:
-            tags = [t for t in og_tags if t.id in self.list] # remove elements not in the whitelist
-        else: # If blacklist
-            tags = [t for t in og_tags if t.id not in self.list] # remove elements in the blacklist
-        return tags
+def verify_tags(filter_list: List, og_tags):
+    """ Remove filtered entries from a list. """
+    if filter_list.type is ListType.WHITELIST:
+        return [t for t in og_tags if t.id in filter_list.list] # remove elements not in whitelist
+    return [t for t in og_tags if t.id not in filter_list.list] # remove elements in blacklist

@@ -4,7 +4,7 @@ import json
 import dataclasses
 import cv2
 import numpy
-from wpimath.geometry import Pose3d, Translation3d, Rotation3d, Quaternion
+from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
 import camera_calibration
 
@@ -47,7 +47,7 @@ class Camera:
         self.cv_sink = CameraServer.getVideo(self.cam)
 
         # Get the offset from JSON
-        self.offset = Pose3d(
+        self.offset = Transform3d(
             Translation3d(
                 offset["position"][0],
                 offset["position"][1],
