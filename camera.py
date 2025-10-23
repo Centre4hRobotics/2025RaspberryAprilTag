@@ -2,7 +2,6 @@
 
 import json
 import dataclasses
-import subprocess
 import cv2
 import numpy
 from wpimath.geometry import Pose3d, Translation3d, Rotation3d, Quaternion
@@ -28,9 +27,7 @@ def init_cameras(cameras):
     output_stream = CameraServer.putVideo("Vision", max_width, max_height)
 
     # set camera settings (bash script)
-    rc = subprocess.call("chmod u+rx set_camera_settings.sh "
-    + "&& /home/pi/2024RaspberryAprilTag/set_camera_settings.sh", shell = True)
-    print("set_camera_settings.sh returned: ", rc)
+
 
     return output_stream
 
@@ -40,16 +37,16 @@ class Camera:
 
     def __init__(self, num, calibration):
 
+        # Get values from JSON
         self.calibration = camera_calibration.CameraCalibration(calibration["profile"])
-
         offset = calibration["offset"]
 
+        # Initialize actual camera portion
         self.cam = CameraServer.startAutomaticCapture(num)
-
         self.cam.setResolution(calibration.x_res, calibration.y_res)
-
         self.cv_sink = CameraServer.getVideo(self.cam)
 
+        # Get the offset from JSON
         self.offset = Pose3d(
             Translation3d(
                 offset["position"][0],
@@ -66,16 +63,18 @@ class Camera:
             )
         )
 
+        # Initialize image
         self.mat = numpy.zeros(shape=(calibration.x_res, calibration.y_res, 3), dtype=numpy.uint8)
         self.gray_mat = numpy.zeros(shape=(calibration.x_res, calibration.y_res), dtype=numpy.uint8)
 
+        # Get correct rotation from calibration
         self.rotate_dist = calibration.rotation
 
     def update(self):
         """ Update images to latest """
         _, self.mat = self.cv_sink.grabFrame(self.mat)
 
-        # Rotate image be top-up
+        # Rotate image to be top-up
         if self.rotate_dist is not None:
             self.mat = cv2.rotate(self.mat, self.rotate_dist)
 

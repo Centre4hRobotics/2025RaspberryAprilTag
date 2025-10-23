@@ -1,5 +1,7 @@
 """ Network tables handling code """
 
+import math
+import numpy
 import ntcore
 
 class NetworkTable:
@@ -50,21 +52,25 @@ class NetworkTable:
 
         self.tag_choice = self.table.getIntegerTopic("Tag Choice").subscribe(0)
 
-    def set_values(self, robot_pose, tag_to_camera, ttc_theta, has_tag,
-                   best_tag_id, best_tag_center):
+    def set_values(self, has_tag, robot_pose, best_tag):
         """ Set important network tables values """
+        self.has_tag.set(has_tag)
         # Publish global position
         self.robot_x.set(robot_pose.x)
         self.robot_y.set(robot_pose.y)
         #robot_z.set(robot_pose.z)
 
-        # Publish local position & rotation
-        self.tag_to_camera_x.set(tag_to_camera.x)
-        self.tag_to_camera_y.set(tag_to_camera.y)
+        if best_tag:
+            # Publish local position & rotation
+            self.tag_to_camera_x.set(best_tag.tag_to_camera.x)
+            self.tag_to_camera_y.set(best_tag.tag_to_camera.y)
 
-        self.tag_to_camera_theta.set(ttc_theta)
+            z = best_tag.tag_to_camera.rotation().z
 
-        # Other
-        self.has_tag.set(has_tag)
-        self.best_tag_id.set(best_tag_id)
-        self.tag_center_x.set(best_tag_center[0])
+            self.tag_to_camera_theta.set(
+                z - numpy.sign(z) * math.pi
+            )
+
+            # Other
+            self.best_tag_id.set(best_tag.id)
+            self.tag_center_x.set(best_tag.detection.getCenter().x)

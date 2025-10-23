@@ -1,7 +1,14 @@
-""" Represent apriltag data """
+""" Represent apriltags & allow operations on them """
 
+import math
 import numpy
+import robotpy_apriltag
+from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem, Pose3d
 import cv2
+
+flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
+aprilTag_field_layout = robotpy_apriltag.AprilTagFieldLayout("config/TagPoses.json")
+
 
 class Apriltag:
     """ Represent apriltag data """
@@ -10,6 +17,10 @@ class Apriltag:
         self.id = detection.getId()
         self.corners = list(self.detection.getCorners(numpy.empty(8)))
         self.undistorted_corners = self.corners
+
+        self.tag_to_camera = Transform3d()
+        self.global_pose = aprilTag_field_layout.getTagPose(self.id)
+        self.camera_pose = Pose3d()
 
     def draw_corners(self, mat, line_color):
         """ Draw the corners of this tag onto the screen """
@@ -36,4 +47,27 @@ class Apriltag:
             self.undistorted_corners[2 * i + 1] = undistorted_corners[i][0][1]
 
     def x_dist(self, x_res):
+        """ Get the x-position (0 is the left side) """
         return (2 * self.detection.getCenter().x - x_res) / x_res
+
+    def calculate_pose(self, estimator):
+        """ Calculate the pose of the camera relative to the tag """
+
+        cam_to_tag = estimator.pose_estimator.estimate(
+            homography = self.detection.getHomography(),
+            corners = tuple(self.undistorted_corners)
+        )
+
+        # Start by flipping the tag's rotation, to orient it as a viewer
+        cam_to_tag = Transform3d(cam_to_tag.translation(),
+                                    cam_to_tag.rotation().rotateBy(flip_tag_rotation))
+
+        # Change coordinate system from East/Down/North to a WPILib standard North/West/Up
+        cam_to_tag = CoordinateSystem.convert(cam_to_tag,
+                                                    CoordinateSystem.EDN(),
+                                                    CoordinateSystem.NWU())
+
+        # Convert the transformation from camera->tag to tag->camera
+        self.tag_to_camera = cam_to_tag.inverse()
+
+        return self.tag_to_camera
