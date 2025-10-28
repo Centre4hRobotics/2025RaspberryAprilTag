@@ -15,20 +15,20 @@ class CameraCalibration:
 
         camera_data = calibration_data[profile]
 
-        fx = camera_data["Intrinsics"]["Fx"]
-        fy = camera_data["Intrinsics"]["Fy"]
-        cx = camera_data["Intrinsics"]["Cx"]
-        cy = camera_data["Intrinsics"]["Cy"]
+        fx = camera_data["intrinsics"]["Fx"]
+        fy = camera_data["intrinsics"]["Fy"]
+        cx = camera_data["intrinsics"]["Cx"]
+        cy = camera_data["intrinsics"]["Cy"]
 
-        self.x_res = camera_data["Resolution"]["x"]
-        self.y_res = camera_data["Resolution"]["y"]
+        self.x_res = camera_data["resolution"]["x"]
+        self.y_res = camera_data["resolution"]["y"]
 
         self.camera_distortion = numpy.float32([
-            camera_data["Distortion"]["A"],
-            camera_data["Distortion"]["B"],
-            camera_data["Distortion"]["C"],
-            camera_data["Distortion"]["D"],
-            camera_data["Distortion"]["E"]
+            camera_data["distortion"]["A"],
+            camera_data["distortion"]["B"],
+            camera_data["distortion"]["C"],
+            camera_data["distortion"]["D"],
+            camera_data["distortion"]["E"]
         ]) # pyright: ignore[reportArgumentType]
         self.camera_intrinsics = numpy.eye(3)
         self.camera_intrinsics[0][0] = fx
