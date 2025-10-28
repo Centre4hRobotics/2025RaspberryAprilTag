@@ -67,7 +67,7 @@ def set_values(table, has_tag, robot_pose, best_tag):
 
         # Calculate theta
         z = best_tag.tag_to_camera.rotation().z
-        table.tag_to_camera[3].set(
+        table.tag_to_camera[2].set(
             z - numpy.sign(z) * math.pi
         )
 
