@@ -16,7 +16,7 @@ def init_cameras(cameras):
     with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
         profiles = json.load(file)
 
-    used_profiles = [profiles[c]["resolution"] for c in cameras]
+    used_profiles = [profiles[c["profile"]]["resolution"] for c in cameras]
 
     max_width = max(p["x"] for p in used_profiles)
     max_height = max(p["y"] for p in used_profiles)
