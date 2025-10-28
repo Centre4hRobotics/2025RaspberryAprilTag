@@ -29,6 +29,7 @@ class Apriltag:
             p1 = (int(self.corners[2 * i]),int(self.corners[2 * i + 1]))
             p2 = (int(self.corners[2 * j]),int(self.corners[2 * j + 1]))
             mat = cv2.line(mat, p1, p2, line_color, 2)
+        return mat
 
     def undistort_corners(self, calibration):
         """ Undistort the corners of the apriltag (nessecary for accurate pose estimation) """

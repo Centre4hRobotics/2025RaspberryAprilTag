@@ -58,7 +58,7 @@ def main():
 
             # Draw & undistort tags
             for tag in tags:
-                tag.draw_corners(cam.get_frame(), constants.colors.detection)
+                cam.mat = tag.draw_corners(cam.mat, constants.colors.detection)
 
                 tag.undistort_corners(cam.calibration)
 
@@ -69,7 +69,7 @@ def main():
             best_tag_index = tag_x_pos.index(min(tag_x_pos))
 
             best_tag = tags[best_tag_index]
-            best_tag.draw_corners(cam.get_frame(), constants.colors.best_detection)
+            cam.mat = best_tag.draw_corners(cam.mat, constants.colors.best_detection)
 
             # Calculate global pose
             if best_tag.global_pose:
