@@ -1,15 +1,8 @@
 {
-    "is table host": false,
-    "team number": 4027,
+    "is table host": true,
+    "team number": 7204,
 
     "cameras": [
-        {
-            "profile": "640x480",
-            "offset": {
-                "position": [1, 2, 3],
-                "rotation": [1, 2, 3, 4]
-            }
-        },
         {
             "profile": "640x480",
             "offset": {
