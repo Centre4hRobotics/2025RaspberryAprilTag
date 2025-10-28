@@ -3,17 +3,19 @@
 import dataclasses
 import robotpy_apriltag
 
+from src.camera import calibration
+
 @dataclasses.dataclass
 class ApriltagEstimator:
     """ Wrap WPILib apriltag pose estimator """
-    def __init__(self, calibration):
+    def __init__(self, cal: calibration.CameraCalibration):
 
         pose_estimator_config = robotpy_apriltag.AprilTagPoseEstimator.Config(
             0.1651,  #tag size in meters
-            calibration.camera_intrinsics[0][0],
-            calibration.camera_intrinsics[1][1],
-            calibration.camera_intrinsics[0][2],
-            calibration.camera_intrinsics[1][2],
+            cal.camera_intrinsics[0][0],
+            cal.camera_intrinsics[1][1],
+            cal.camera_intrinsics[0][2],
+            cal.camera_intrinsics[1][2],
         )
 
         self.pose_estimator = robotpy_apriltag.AprilTagPoseEstimator(pose_estimator_config)

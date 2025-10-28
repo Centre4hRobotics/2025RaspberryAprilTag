@@ -3,10 +3,9 @@
 import json
 from wpimath.geometry import Pose3d
 
-import apriltag_estimator
-import network_tables
-import camera
-import apriltag
+from apriltag import apriltag, apriltag_estimator
+from net_table import network_tables
+from camera import camera
 import constants
 
 #  Import all JSON settings

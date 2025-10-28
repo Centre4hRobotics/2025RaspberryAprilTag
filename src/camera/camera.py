@@ -7,7 +7,7 @@ import cv2
 import numpy
 from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
-import camera_calibration
+import calibration
 
 def init_cameras(cameras):
     """ Initialize cameras """
@@ -32,15 +32,15 @@ def init_cameras(cameras):
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, num, calibration):
+    def __init__(self, num: int, cal: dict) -> None:
 
         # Get values from JSON
-        self.calibration = camera_calibration.CameraCalibration(calibration["profile"])
-        offset = calibration["offset"]
+        self.calibration = calibration.CameraCalibration(cal["profile"])
+        offset = cal["offset"]
 
         # Initialize actual camera portion
         self.cam = CameraServer.startAutomaticCapture(num)
-        self.cam.setResolution(calibration.x_res, calibration.y_res)
+        self.cam.setResolution(self.calibration.x_res, self.calibration.y_res)
         self.cv_sink = CameraServer.getVideo(self.cam)
 
         # Get the offset from JSON
@@ -61,11 +61,11 @@ class Camera:
         )
 
         # Initialize image
-        self.mat = numpy.zeros(shape=(calibration.x_res, calibration.y_res, 3), dtype=numpy.uint8)
-        self.gray_mat = numpy.zeros(shape=(calibration.x_res, calibration.y_res), dtype=numpy.uint8)
+        self.mat = numpy.zeros(shape=(self.calibration.x_res, self.calibration.y_res, 3), dtype=numpy.uint8)
+        self.gray_mat = numpy.zeros(shape=(self.calibration.x_res, self.calibration.y_res), dtype=numpy.uint8)
 
         # Get correct rotation from calibration
-        self.rotate_dist = calibration.rotation
+        self.rotate_dist = self.calibration.rotation
 
         # Set camera settings (bash script)
         try:
@@ -80,6 +80,7 @@ class Camera:
         except subprocess.CalledProcessError as err:
             print(f"Error running {err}")
             print(f"Error: {err.stderr}")
+
     def update(self):
         """ Update images to latest """
         _, self.mat = self.cv_sink.grabFrame(self.mat)
