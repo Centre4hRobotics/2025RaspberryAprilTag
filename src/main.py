@@ -3,13 +3,13 @@
 import json
 from wpimath.geometry import Pose3d
 
-from apriltag import apriltag, apriltag_estimator
-from net_table import network_tables
-from camera import camera
-import constants
+from .apriltag import apriltag, apriltag_estimator
+from .net_table import network_tables
+from .camera import camera
+from . import constants
 
 #  Import all JSON settings
-with open("config/Constants.json", encoding="utf-8") as file:
+with open("../config/Constants.json", encoding="utf-8") as file:
     settings = json.load(file)
 
 #  All settings
