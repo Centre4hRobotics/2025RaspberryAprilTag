@@ -71,7 +71,7 @@ class Camera:
         try:
             script = "config/set_camera_settings.sh"
             result = subprocess.run(
-                ["sh", script], # Uses shell to run script
+                ["sh", script, str(num)], # Uses shell to run script
                 capture_output=True,
                 text=True,
                 check=True # Raises an error if this fails
