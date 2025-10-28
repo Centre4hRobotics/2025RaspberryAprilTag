@@ -46,9 +46,7 @@ def main():
         cam = cameras[cam_index]
         cam.update()
 
-        gray_mat, _ = cam.get_frame()
-
-        detections = estimators[cam_index].detector.detect(gray_mat) # type: ignore
+        detections = estimators[cam_index].detector.detect(cam.get_frame()) # type: ignore
 
         tags = [apriltag.Apriltag(detection) for detection in detections]
 

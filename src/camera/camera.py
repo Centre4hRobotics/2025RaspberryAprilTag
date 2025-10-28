@@ -94,4 +94,4 @@ class Camera:
 
     def get_frame(self):
         """ Get frame from camera (lazily) """
-        return self.mat
+        return self.gray_mat
