@@ -69,7 +69,7 @@ class Camera:
 
         # Set camera settings (bash script)
         try:
-            script = "/home/pi/2025RaspberryAprilTag/config/set_camera_settings.sh"
+            script = "config/set_camera_settings.sh"
             result = subprocess.run(
                 f"sh {script}", # Runs the script
                 capture_output=True,
