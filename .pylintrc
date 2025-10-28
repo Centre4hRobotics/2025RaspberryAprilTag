@@ -1,2 +1,5 @@
 [MASTER]
 init-hook='import sys; sys.path.append(".")'
+
+[TYPECHECK]
+generated-members=cv2.*

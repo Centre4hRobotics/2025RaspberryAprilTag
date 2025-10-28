@@ -2,7 +2,6 @@
     "is table host": false,
     "team number": 4027,
 
-    "tag poses": "config/TagPoses.json",
     "cameras": [
         {
             "profile": "640x480",
@@ -20,6 +19,6 @@
         }
     ],
 
-    "apriltag whitelist": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ],
+    "apriltag whitelist": null,
     "apriltag blacklist": null
 }

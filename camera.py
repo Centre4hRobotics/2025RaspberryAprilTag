@@ -1,5 +1,6 @@
 """ Represent and initialize cameras """
 
+import subprocess
 import json
 import dataclasses
 import cv2
@@ -15,14 +16,10 @@ def init_cameras(cameras):
     with open("config/CameraCalibration.json", 'r', encoding='utf-8') as file:
         profiles = json.load(file)
 
-    max_width = 0
-    max_height = 0
+    used_profiles = [profiles[c]["resolution"] for c in cameras]
 
-    for cam in cameras:
-        if profiles[cam["profile"]]["resolution"]["x"] > max_width:
-            max_width = profiles[cam["profile"]]["resolution"]["x"]
-        if profiles[cam["profile"]]["resolution"]["y"] > max_height:
-            max_height = profiles[cam["profile"]]["resolution"]["y"]
+    max_width = max(p["x"] for p in used_profiles)
+    max_height = max(p["y"] for p in used_profiles)
 
     output_stream = CameraServer.putVideo("Vision", max_width, max_height)
 
@@ -70,6 +67,19 @@ class Camera:
         # Get correct rotation from calibration
         self.rotate_dist = calibration.rotation
 
+        # Set camera settings (bash script)
+        try:
+            script = "/home/pi/2025RaspberryAprilTag/config/set_camera_settings.sh"
+            result = subprocess.run(
+                f"sh {script}", # Runs the script
+                capture_output=True,
+                text=True,
+                check=True # Raises an error if this fails
+            )
+            print(result)
+        except subprocess.CalledProcessError as err:
+            print(f"Error running {err}")
+            print(f"Error: {err.stderr}")
     def update(self):
         """ Update images to latest """
         _, self.mat = self.cv_sink.grabFrame(self.mat)

@@ -9,11 +9,12 @@ import ntcore
 class NetworkTable:
     """ Wrap network tables """
     def __init__(self, is_host, team_number=4027):
+
         nt_instance = ntcore.NetworkTableInstance.getDefault()
 
+        # If this is hosting, start the server. Else, join the server
         if is_host:
             nt_instance.startServer()
-
         else:
             nt_instance.setServerTeam(team_number)
             nt_instance.startClient4("visionPi")
@@ -46,10 +47,9 @@ class NetworkTable:
         # Which tag is "best"
         self.best_tag_id = self.table.getIntegerTopic("Best Tag ID").publish()
 
-        "Which camera to use"
+        # Which camera to use (0-indexed)
         camera_topic = self.table.getIntegerTopic("Using Camera").publish()
         camera_topic.set(0)
-
         self.camera_choice = self.table.getIntegerTopic("Using Camera").subscribe(-1)
 
 def set_values(table, has_tag, robot_pose, best_tag):
@@ -65,8 +65,8 @@ def set_values(table, has_tag, robot_pose, best_tag):
         table.tag_to_camera[0].set(best_tag.tag_to_camera.x)
         table.tag_to_camera[1].set(best_tag.tag_to_camera.y)
 
+        # Calculate theta
         z = best_tag.tag_to_camera.rotation().z
-
         table.tag_to_camera[3].set(
             z - numpy.sign(z) * math.pi
         )

@@ -10,7 +10,7 @@ import apriltag
 import constants
 
 #  Import all JSON settings
-with open("config/Constants.json", encoding="utf-8s") as file:
+with open("config/Constants.json", encoding="utf-8") as file:
     settings = json.load(file)
 
 #  All settings
