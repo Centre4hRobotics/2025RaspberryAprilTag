@@ -3,7 +3,7 @@
 import dataclasses
 import robotpy_apriltag
 
-from src.camera import calibration
+from ..camera import calibration
 
 @dataclasses.dataclass
 class ApriltagEstimator:
