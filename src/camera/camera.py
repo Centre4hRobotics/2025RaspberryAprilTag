@@ -73,7 +73,6 @@ class Camera:
             result = subprocess.run(
                 ["sh", script, str(num)], # Uses shell to run script
                 capture_output=True,
-                text=True,
                 check=True # Raises an error if this fails
             )
             print(result)
