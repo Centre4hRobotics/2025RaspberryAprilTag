@@ -10,7 +10,7 @@ class CameraCalibration:
     # I see the pylint warning, but these are all so closely related that they should still be here.
     """ Store camera calibration data """
     def __init__(self, profile):
-        with open('config/CameraCalibration.json', encoding="utf-8") as file:
+        with open('config/CameraProfiles.json', encoding="utf-8") as file:
             calibration_data = json.load(file)
 
         camera_data = calibration_data[profile]
