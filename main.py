@@ -66,7 +66,7 @@ def main():
 
             # Get most centered tag
             tag_x_pos = [x.x_dist(cam.calibration.x_res) for x in tags]
-            best_tag_index = tag_x_pos.index(next((t for t in tags if tag_x_pos is min(tag_x_pos))))
+            best_tag_index = tag_x_pos.index(next((t for t in tags if t.x_dist(cam.calibration.x_res) is min(tag_x_pos))))
 
             best_tag = tags[best_tag_index]
             best_tag.draw_corners(cam.get_frame(), constants.colors.best_detection)
