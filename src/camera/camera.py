@@ -90,7 +90,7 @@ class Camera:
 
         self.gray_mat = cv2.cvtColor(self.mat, cv2.COLOR_RGB2GRAY)
 
-        return self.mat, self.gray_mat
+        return self.gray_mat, self.mat
 
     def get_frame(self):
         """ Get frame from camera (lazily) """
