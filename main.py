@@ -1,6 +1,7 @@
 """ This is the main file for FRC Team 4027's 2024 AprilTag Vision. """
 
 import json
+import time
 from wpimath.geometry import Pose3d
 
 from src.apriltag import apriltag, apriltag_estimator
@@ -37,7 +38,13 @@ def main():
 
     best_tag = None
 
+    last_time = time.time()
+
     while True:
+
+        print(last_time - time.time())
+        last_time = time.time()
+
         # Reset local variables
         has_tag = False
 
