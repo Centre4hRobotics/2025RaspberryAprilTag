@@ -19,6 +19,6 @@
         }
     ],
 
-    "apriltag whitelist": null,
-    "apriltag blacklist": null
+    "whitelist": null,
+    "blacklist": null
 }
