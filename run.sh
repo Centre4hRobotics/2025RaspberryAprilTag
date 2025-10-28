@@ -2,6 +2,4 @@
 
 cd $(dirname $0)
 
-cd src
-
-../venv/bin/python main.py
+venv/bin/python main.py
