@@ -8,7 +8,7 @@ from src.net_table import network_tables
 from src.camera import camera
 from src import constants
 #  Import all JSON settings
-with open("../config/Constants.json", encoding="utf-8") as file:
+with open("config/Constants.json", encoding="utf-8") as file:
     settings = json.load(file)
 
 #  All settings

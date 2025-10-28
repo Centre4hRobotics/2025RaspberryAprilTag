@@ -13,7 +13,7 @@ def init_cameras(cameras):
     """ Initialize cameras """
     CameraServer.enableLogging()
 
-    with open("../config/CameraCalibration.json", 'r', encoding='utf-8') as file:
+    with open("config/CameraCalibration.json", 'r', encoding='utf-8') as file:
         profiles = json.load(file)
 
     used_profiles = [profiles[c]["resolution"] for c in cameras]
