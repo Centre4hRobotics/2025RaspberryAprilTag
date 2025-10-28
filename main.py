@@ -42,7 +42,7 @@ def main():
 
     while True:
 
-        print(last_time - time.time())
+        print((time.time() - last_time ) / 0.03333333333)
         last_time = time.time()
 
         # Reset local variables
