@@ -78,7 +78,7 @@ def main():
 
         # Publish everything to network tables
 
-        output_stream.putFrame(cam.get_frame())
+        output_stream.putFrame(cam.mat)
 
         network_tables.set_values(tables,
             # General
