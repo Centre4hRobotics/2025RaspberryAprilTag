@@ -36,7 +36,7 @@ class CameraCalibration:
         self.camera_intrinsics[0][2] = cx
         self.camera_intrinsics[1][2] = cy
 
-        match calibration_data["rotation"]:
+        match camera_data["rotation"]:
             case "90":
                 self.rotation = cv2.ROTATE_90_CLOCKWISE
             case "180":
