@@ -5,8 +5,7 @@
 cd "$(dirname $0)"
 
 # Create python virtual environment
-mkdir .venv
-python -m venv ./.venv
+python -m venv .venv
 pydir=./.venv/bin/python
 
 # Install required PIP packages
