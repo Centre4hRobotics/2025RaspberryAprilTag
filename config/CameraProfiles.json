@@ -1,16 +1,16 @@
 {
     "640x480": {
-        "Resolution": {
+        "resolution": {
             "x": 640,
             "y": 480
         },
-        "Intrinsics": {
+        "intrinsics": {
             "Fx": 550.77,
             "Fy": 550.91,
             "Cx": 320.55,
             "Cy": 240.90
         },
-        "Distortion": {
+        "distortion": {
             "A": 0.046,
             "B": -0.059,
             "C": 0.002,
@@ -19,6 +19,8 @@
             "F": -0.002,
 	        "G": 0.002,
 	        "H": 0
-        }
+        },
+        "rotation": "-90",
+        "fps": 30
     }
 }
