@@ -4,10 +4,8 @@ import math
 
 import numpy
 import robotpy_apriltag
-from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem, Pose3d, Pose2d, Translation2d, Rotation2d
+from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem, Pose3d
 import cv2
-
-from src.camera import calibration
 
 flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
 aprilTag_field_layout = robotpy_apriltag.AprilTagFieldLayout("config/TagPoses.json")
@@ -84,31 +82,3 @@ class Apriltag:
         self.tag_to_camera = cam_to_tag.inverse()
 
         return self.tag_to_camera
-
-def multi_tag_pose(tags: list[Apriltag], camera_calibration: calibration.CameraCalibration) -> Pose2d:
-    """ Use SolvePNP to find the robot's pose. """
-
-    # World Points (corners of tags)
-    world_points = numpy.array([[t.global_pose.x, t.global_pose.y, t.global_pose.z] for t in tags if t.global_pose is not None])
-
-    # Screen points (corners of tags)
-    screen_points = numpy.array([[t.detection.getCenter().x, t.detection.getCenter().x] for t in tags if t.global_pose is not None])
-
-    # Distortions
-    distortion = numpy.array(camera_calibration.camera_distortion)
-
-    # Intrinsics
-    intrinsics = numpy.array(camera_calibration.camera_intrinsics)
-
-    success, rvec, tvec = cv2.solvePnP(world_points, screen_points, intrinsics, distortion)
-
-    if success:
-        R, _ = cv2.Rodrigues(rvec)
-
-        cam_pos_world = -R.T @ tvec
-
-        x, y, _ = cam_pos_world.reshape(3)
-
-        return Pose2d(Translation2d(float(x), float(y)), Rotation2d())
-
-    return Pose2d()

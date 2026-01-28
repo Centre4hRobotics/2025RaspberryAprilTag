@@ -4,7 +4,7 @@
 from wpimath.geometry import Pose3d
 
 from src import constants, settings
-from src.apriltag import apriltag
+from src.apriltag import apriltag, multitag
 
 def main() -> None:
     """ Main loop """
@@ -30,7 +30,7 @@ def main() -> None:
         tags = [apriltag.Apriltag(detection) for detection in detections]
 
         # Calculate global pose
-        robot_pose = apriltag.multi_tag_pose(tags, cam.calibration)
+        robot_pose = multitag.multi_tag_pose(tags, cam)
 
         # Change tags based on whitelist/blacklist
         tags = init.filter_list.filter_tags(tags)

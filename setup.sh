@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This script is Linux-ARM ONLY!!! It will not work on Windows, Mac, or any x86/RISC-V processor
+# This script is ARM ONLY!!! It will not work on any x86/RISC-V processor
+# This project requires Linux
 
 cd "$(dirname $0)"
 

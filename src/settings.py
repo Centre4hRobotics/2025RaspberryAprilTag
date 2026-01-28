@@ -66,7 +66,10 @@ class Settings:
         self.cameras = [camera.Camera(2 * i, c) for i, c in enumerate(camera_data)]
 
         # Create the PoseEstimator & adjust its settings
-        self.estimators = [apriltag_estimator.ApriltagEstimator(cam.calibration) for cam in self.cameras]
+        self.estimators = [
+            apriltag_estimator.ApriltagEstimator(cam.calibration)
+            for cam in self.cameras
+        ]
 
         # Creating the network tables
         self.tables = network_tables.NetworkTable(is_table_host, team_number)

@@ -8,7 +8,8 @@ import ntcore
 @dataclasses.dataclass
 class NetworkTable:
     """ Wrap network tables """
-    def __init__(self, is_host, team_number=4027):
+
+    def __init__(self, is_host: bool, team_number: int):
 
         nt_instance = ntcore.NetworkTableInstance.getDefault()
 
