@@ -1,6 +1,6 @@
 """ This is the main file for FRC Team 4027's 2026 AprilTag Vision. """
 
-
+import time
 from wpimath.geometry import Pose3d
 
 from src import constants, settings
@@ -12,10 +12,16 @@ def main() -> None:
     init = settings.Settings("config/Constants.json")
 
     # Retained variables
-    robot_pose = Pose3d()
+    robot_pose = None
     best_tag = None
 
+    lastframe = time.perf_counter()
+
     while True:
+
+        now = time.perf_counter()
+        print(1/(now - lastframe))
+        lastframe = now
 
         # Reset local variables
         has_tag = False

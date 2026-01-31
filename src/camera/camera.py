@@ -1,11 +1,11 @@
 """ Represent and initialize cameras """
 
-import subprocess
 import json
 import dataclasses
 
 import cv2
 import numpy
+import picamera2
 from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
 
@@ -25,9 +25,6 @@ def init_cameras(cameras):
 
     output_stream = CameraServer.putVideo("Vision", max_width, max_height)
 
-    # set camera settings (bash script)
-
-
     return output_stream
 
 @dataclasses.dataclass
@@ -41,9 +38,14 @@ class Camera:
         offset = cal["offset"]
 
         # Initialize actual camera portion
-        self.cam = CameraServer.startAutomaticCapture(num)
-        self.cam.setResolution(self.calibration.x_res, self.calibration.y_res)
-        self.cv_sink = CameraServer.getVideo(self.cam)
+
+        self.cam = picamera2.Picamera2()
+
+        self.cam.set_controls({"ExposureTime": 10000})
+
+        camera_config = self.cam.create_preview_configuration()
+        self.cam.configure(camera_config)
+        self.cam.start()
 
         # Get the offset from JSON
         self.offset = Transform3d(
@@ -69,30 +71,17 @@ class Camera:
         # Get correct rotation from calibration
         self.rotate_dist = self.calibration.rotation
 
-        # Set camera settings (bash script)
-        try:
-            script = "config/set_camera_settings.sh"
-            result = subprocess.run(
-                ["sh", script, str(num)], # Uses shell to run script
-                capture_output=True,
-                check=True # Raises an error if this fails
-            )
-            print(result)
-        except subprocess.CalledProcessError as err:
-            print(f"Error running {err}")
-            print(f"Error: {err.stderr}")
-
     def update(self):
         """ Update images to latest """
-        _, self.mat = self.cv_sink.grabFrame(self.mat)
+        #preview_config = self.cam.create_preview_configuration()
+        #self.cam.switch_mode(preview_config)
+        self.mat = self.cam.capture_array()
 
         # Rotate image to be top-up
         if self.rotate_dist is not None:
             self.mat = cv2.rotate(self.mat, self.rotate_dist)
 
         self.gray_mat = cv2.cvtColor(self.mat, cv2.COLOR_RGB2GRAY)
-
-        return self.gray_mat, self.mat
 
     def get_frame(self):
         """ Get frame from camera (lazily) """

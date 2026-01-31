@@ -4,9 +4,9 @@ import dataclasses
 from enum import Enum
 import json
 
-from apriltag import apriltag_estimator
-from camera import camera
-import network_tables
+from src.apriltag import apriltag_estimator
+from src.camera import camera
+from src import network_tables
 
 class ListType(Enum):
     """ Determine which type of List (blacklist or whitelist) is being used. """

@@ -50,8 +50,10 @@ class NetworkTable:
         """ Set important network tables values """
         self.has_tag.set(has_tag)
         # Publish global position
-        self.robot_global_pose.set([robot_pose.x, robot_pose.y])
-        #robot_z.set(robot_pose.z)
+        if robot_pose is not None:
+            self.robot_global_pose.set([robot_pose.x, robot_pose.y])
+        else:
+            self.robot_global_pose.set([-1, -1])
 
         if best_tag:
             # Publish local position & rotation
