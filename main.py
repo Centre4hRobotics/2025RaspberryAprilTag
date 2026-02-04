@@ -1,93 +1,61 @@
-""" This is the main file for FRC Team 4027's 2024 AprilTag Vision. """
+""" This is the main file for FRC Team 4027's 2026 AprilTag Vision. """
 
-import json
-import time
-from wpimath.geometry import Pose3d
+from src import settings
+from src.apriltag import apriltag, multitag
 
-from src.apriltag import apriltag, apriltag_estimator
-from src.net_table import network_tables
-from src.camera import camera
-from src import constants
-#  Import all JSON settings
-with open("config/Constants.json", encoding="utf-8") as file:
-    settings = json.load(file)
+def main() -> None:
+    """ Main loop """
 
-#  All settings
-IS_TABLE_HOST = settings["is table host"]
-TEAM_NUMBER = settings["team number"]
-CAMERAS = settings["cameras"]
+    init = settings.Settings("config/Settings.json")
 
-# Set the blacklist/whitelist
-FILTER = constants.List(settings)
+    cam = init.camera
 
-# Camera Stuff
-output_stream = camera.init_cameras(CAMERAS)
-
-# Note: This may or may not work, I'm just guessing how cameras are assigned
-cameras = [camera.Camera(2 * i, c) for i, c in enumerate(CAMERAS)]
-
-# Create the PoseEstimator & adjust its settings
-estimators = [apriltag_estimator.ApriltagEstimator(cam.calibration) for cam in cameras]
-
-# Creating the network tables
-tables = network_tables.NetworkTable(IS_TABLE_HOST, TEAM_NUMBER)
-
-def main():
-    """ Main loop"""
-    robot_pose = Pose3d()
-
+    # Retained variables
+    robot_pose = None
     best_tag = None
 
-    last_time = time.time()
-
     while True:
-
-        print(1 / (time.time() - last_time ))
-        last_time = time.time()
 
         # Reset local variables
         has_tag = False
 
         # Update selections
-        cam_index: int = tables.camera_choice.get()
-        cam = cameras[cam_index]
         cam.update()
 
-        detections = estimators[cam_index].detector.detect(cam.get_frame()) # type: ignore
+        detections = init.estimator.detector.detect(cam.get_frame()) # type: ignore
 
         tags = [apriltag.Apriltag(detection) for detection in detections]
 
+        # Calculate global pose
+        robot_pose = multitag.multi_tag_pose(tags, cam)
+
         # Change tags based on whitelist/blacklist
-        tags = constants.verify_tags(FILTER, tags)
+        tags = init.filter_list.filter_tags(tags)
 
         if tags: # If there are tags to look at
             has_tag = True
 
             # Draw & undistort tags
             for tag in tags:
-                cam.mat = tag.draw_corners(cam.mat, constants.colors.detection)
+                cam.mat = tag.draw_corners(cam.mat, (255, 255, 0))
+
 
                 tag.undistort_corners(cam.calibration)
 
-                tag.calculate_pose(estimators[cam_index])
+                tag.calculate_pose(init.estimator)
 
             # Get most centered tag
             tag_x_pos = [x.x_dist(cam.calibration.x_res) for x in tags]
             best_tag_index = tag_x_pos.index(min(tag_x_pos))
 
             best_tag = tags[best_tag_index]
-            cam.mat = best_tag.draw_corners(cam.mat, constants.colors.best_detection)
-
-            # Calculate global pose
-            if best_tag.global_pose:
-                camera_pose = best_tag.global_pose.transformBy(best_tag.tag_to_camera)
-                robot_pose = camera_pose.transformBy(cam.offset)
+            cam.mat = best_tag.draw_corners(cam.mat, (0, 255, 0))
 
         # Publish everything to network tables
 
-        output_stream.putFrame(cam.mat)
+        cam.output_stream.putFrame(cam.mat)
 
-        network_tables.set_values(tables,
+        init.tables.set_values(
             # General
             has_tag,
             robot_pose,

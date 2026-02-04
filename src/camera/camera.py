@@ -1,47 +1,46 @@
 """ Represent and initialize cameras """
 
-import subprocess
 import json
 import dataclasses
+
 import cv2
 import numpy
+import picamera2
 from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
-from . import calibration
 
-def init_cameras(cameras):
-    """ Initialize cameras """
-    CameraServer.enableLogging()
+from src.camera import calibration
 
-    with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
-        profiles = json.load(file)
-
-    used_profiles = [profiles[c["profile"]]["resolution"] for c in cameras]
-
-    max_width = max(p["x"] for p in used_profiles)
-    max_height = max(p["y"] for p in used_profiles)
-
-    output_stream = CameraServer.putVideo("Vision", max_width, max_height)
-
-    # set camera settings (bash script)
-
-
-    return output_stream
 
 @dataclasses.dataclass
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, num: int, cal: dict) -> None:
+    def __init__(self, _calibration: dict) -> None:
+        CameraServer.enableLogging()
+
+        with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
+            profiles = json.load(file)
+
+        profile = profiles[_calibration['profile']]["resolution"]
+
+        self.output_stream = CameraServer.putVideo("Vision", profile['x'], profile['y'])
 
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(cal["profile"])
-        offset = cal["offset"]
+        self.calibration = calibration.CameraCalibration(_calibration["profile"])
+        offset = _calibration["offset"]
 
         # Initialize actual camera portion
-        self.cam = CameraServer.startAutomaticCapture(num)
-        self.cam.setResolution(self.calibration.x_res, self.calibration.y_res)
-        self.cv_sink = CameraServer.getVideo(self.cam)
+        self.cam = picamera2.Picamera2()
+
+        camera_config = self.cam.create_video_configuration(
+            main={
+                'size': (profile['x'], profile['y'])
+            }
+        )
+
+        self.cam.configure(camera_config)
+        self.cam.start()
 
         # Get the offset from JSON
         self.offset = Transform3d(
@@ -61,36 +60,28 @@ class Camera:
         )
 
         # Initialize image
-        self.mat = numpy.zeros(shape=(self.calibration.x_res, self.calibration.y_res, 3), dtype=numpy.uint8)
-        self.gray_mat = numpy.zeros(shape=(self.calibration.x_res, self.calibration.y_res), dtype=numpy.uint8)
+        self.mat = numpy.zeros(
+            shape=(self.calibration.x_res, self.calibration.y_res, 3),
+            dtype=numpy.uint8
+        )
+        self.gray_mat = numpy.zeros(
+            shape=(self.calibration.x_res, self.calibration.y_res),
+            dtype=numpy.uint8
+        )
 
         # Get correct rotation from calibration
         self.rotate_dist = self.calibration.rotation
 
-        # Set camera settings (bash script)
-        try:
-            script = "config/set_camera_settings.sh"
-            result = subprocess.run(
-                ["sh", script, str(num)], # Uses shell to run script
-                capture_output=True,
-                check=True # Raises an error if this fails
-            )
-            print(result)
-        except subprocess.CalledProcessError as err:
-            print(f"Error running {err}")
-            print(f"Error: {err.stderr}")
-
     def update(self):
         """ Update images to latest """
-        _, self.mat = self.cv_sink.grabFrame(self.mat)
+
+        self.mat = self.cam.capture_array()
 
         # Rotate image to be top-up
         if self.rotate_dist is not None:
             self.mat = cv2.rotate(self.mat, self.rotate_dist)
 
         self.gray_mat = cv2.cvtColor(self.mat, cv2.COLOR_RGB2GRAY)
-
-        return self.gray_mat, self.mat
 
     def get_frame(self):
         """ Get frame from camera (lazily) """

@@ -1,3 +1,4 @@
 networktables.json
-venv/
+*venv/
 .vscode/
+**/__pycache__/
