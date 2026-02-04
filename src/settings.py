@@ -38,9 +38,15 @@ class FilterList:
         """ Remove filtered entries from a list. """
 
         if self.type is ListType.WHITELIST:
-            return [tag for tag in tags if tag.id in self.list] # remove elements not in whitelist
+            return [
+                tag for tag in tags
+                if tag.id in self.list and tag.id <= 32
+            ] # filter elements in blacklist
 
-        return [tag for tag in tags if tag.id not in self.list] # remove elements in blacklist
+        return [
+            tag for tag in tags
+            if tag.id not in self.list and tag.id <= 32
+        ] # filter elements in blacklist
 
 @dataclasses.dataclass
 class Settings:
@@ -58,18 +64,13 @@ class Settings:
         self.filter_list = FilterList(settings_json)
 
         # Camera Stuff
-        camera_data = settings_json["cameras"]
-
-        self.output_stream = camera.init_cameras(camera_data)
+        camera_data = settings_json["camera"]
 
         # Note: This may or may not work, I'm just guessing how cameras are assigned
-        self.cameras = [camera.Camera(2 * i, c) for i, c in enumerate(camera_data)]
+        self.camera = camera.Camera(camera_data)
 
         # Create the PoseEstimator & adjust its settings
-        self.estimators = [
-            apriltag_estimator.ApriltagEstimator(cam.calibration)
-            for cam in self.cameras
-        ]
+        self.estimator = apriltag_estimator.ApriltagEstimator(self.camera.calibration)
 
         # Creating the network tables
         self.tables = network_tables.NetworkTable(is_table_host, team_number)

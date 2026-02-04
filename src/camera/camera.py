@@ -11,39 +11,34 @@ from cscore import CameraServer
 
 from src.camera import calibration
 
-def init_cameras(cameras):
-    """ Initialize cameras """
-    CameraServer.enableLogging()
-
-    with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
-        profiles = json.load(file)
-
-    used_profiles = [profiles[c["profile"]]["resolution"] for c in cameras]
-
-    max_width = max(p["x"] for p in used_profiles)
-    max_height = max(p["y"] for p in used_profiles)
-
-    output_stream = CameraServer.putVideo("Vision", max_width, max_height)
-
-    return output_stream
 
 @dataclasses.dataclass
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, num: int, cal: dict) -> None:
+    def __init__(self, _calibration: dict) -> None:
+        CameraServer.enableLogging()
+
+        with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
+            profiles = json.load(file)
+
+        profile = profiles[_calibration['profile']]["resolution"]
+
+        self.output_stream = CameraServer.putVideo("Vision", profile['x'], profile['y'])
 
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(cal["profile"])
-        offset = cal["offset"]
+        self.calibration = calibration.CameraCalibration(_calibration["profile"])
+        offset = _calibration["offset"]
 
         # Initialize actual camera portion
-
         self.cam = picamera2.Picamera2()
 
-        self.cam.set_controls({"ExposureTime": 10000})
+        camera_config = self.cam.create_video_configuration(
+            main={
+                'size': (profile['x'], profile['y'])
+            }
+        )
 
-        camera_config = self.cam.create_preview_configuration()
         self.cam.configure(camera_config)
         self.cam.start()
 
@@ -65,16 +60,21 @@ class Camera:
         )
 
         # Initialize image
-        self.mat = numpy.zeros(shape=(self.calibration.x_res, self.calibration.y_res, 3), dtype=numpy.uint8)
-        self.gray_mat = numpy.zeros(shape=(self.calibration.x_res, self.calibration.y_res), dtype=numpy.uint8)
+        self.mat = numpy.zeros(
+            shape=(self.calibration.x_res, self.calibration.y_res, 3),
+            dtype=numpy.uint8
+        )
+        self.gray_mat = numpy.zeros(
+            shape=(self.calibration.x_res, self.calibration.y_res),
+            dtype=numpy.uint8
+        )
 
         # Get correct rotation from calibration
         self.rotate_dist = self.calibration.rotation
 
     def update(self):
         """ Update images to latest """
-        #preview_config = self.cam.create_preview_configuration()
-        #self.cam.switch_mode(preview_config)
+
         self.mat = self.cam.capture_array()
 
         # Rotate image to be top-up

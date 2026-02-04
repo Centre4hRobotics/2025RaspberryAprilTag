@@ -1,0 +1,16 @@
+{
+    "is table host": true,
+    "team number": 7204,
+
+    "camera":
+    {
+        "profile": "1280x800",
+        "offset": {
+            "position": [0, 0, 0],
+            "rotation": [1, 0, 0, 0]
+        }
+    },
+
+    "whitelist": null,
+    "blacklist": null
+}

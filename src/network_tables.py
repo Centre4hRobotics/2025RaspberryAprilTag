@@ -41,11 +41,6 @@ class NetworkTable:
         # Which tag is "best"
         self.best_tag_id = self.table.getIntegerTopic("Best Tag ID").publish()
 
-        # Which camera to use (0-indexed)
-        camera_topic = self.table.getIntegerTopic("Using Camera").publish()
-        camera_topic.set(0)
-        self.camera_choice = self.table.getIntegerTopic("Using Camera").subscribe(-1)
-
     def set_values(self, has_tag, robot_pose, best_tag):
         """ Set important network tables values """
         self.has_tag.set(has_tag)

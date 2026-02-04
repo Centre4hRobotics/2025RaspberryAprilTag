@@ -8,7 +8,7 @@ from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem, Pose3d
 import cv2
 
 flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
-aprilTag_field_layout = robotpy_apriltag.AprilTagFieldLayout("config/TagPoses.json")
+aprilTag_field_layout = robotpy_apriltag.AprilTagFieldLayout("config/2026-rebuilt-andymark.json")
 
 
 class Apriltag:

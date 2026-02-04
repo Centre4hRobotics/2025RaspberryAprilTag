@@ -1,37 +1,28 @@
 """ This is the main file for FRC Team 4027's 2026 AprilTag Vision. """
 
-import time
-from wpimath.geometry import Pose3d
-
-from src import constants, settings
+from src import settings
 from src.apriltag import apriltag, multitag
 
 def main() -> None:
     """ Main loop """
 
-    init = settings.Settings("config/Constants.json")
+    init = settings.Settings("config/Settings.json")
+
+    cam = init.camera
 
     # Retained variables
     robot_pose = None
     best_tag = None
 
-    lastframe = time.perf_counter()
-
     while True:
-
-        now = time.perf_counter()
-        print(1/(now - lastframe))
-        lastframe = now
 
         # Reset local variables
         has_tag = False
 
         # Update selections
-        cam_index: int = init.tables.camera_choice.get()
-        cam = init.cameras[cam_index]
         cam.update()
 
-        detections = init.estimators[cam_index].detector.detect(cam.get_frame()) # type: ignore
+        detections = init.estimator.detector.detect(cam.get_frame()) # type: ignore
 
         tags = [apriltag.Apriltag(detection) for detection in detections]
 
@@ -46,22 +37,23 @@ def main() -> None:
 
             # Draw & undistort tags
             for tag in tags:
-                cam.mat = tag.draw_corners(cam.mat, constants.Colors.detection)
+                cam.mat = tag.draw_corners(cam.mat, (255, 255, 0))
+
 
                 tag.undistort_corners(cam.calibration)
 
-                tag.calculate_pose(init.estimators[cam_index])
+                tag.calculate_pose(init.estimator)
 
             # Get most centered tag
             tag_x_pos = [x.x_dist(cam.calibration.x_res) for x in tags]
             best_tag_index = tag_x_pos.index(min(tag_x_pos))
 
             best_tag = tags[best_tag_index]
-            cam.mat = best_tag.draw_corners(cam.mat, constants.Colors.best_detection)
+            cam.mat = best_tag.draw_corners(cam.mat, (0, 255, 0))
 
         # Publish everything to network tables
 
-        init.output_stream.putFrame(cam.mat)
+        cam.output_stream.putFrame(cam.mat)
 
         init.tables.set_values(
             # General
