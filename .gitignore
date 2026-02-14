@@ -2,3 +2,5 @@ networktables.json
 *venv/
 .vscode/
 **/__pycache__/
+calibration/*
+**.png

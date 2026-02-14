@@ -5,6 +5,7 @@
 
 cd "$(dirname $0)"
 
+# Install Picamera2; nessecary for Luma P1 support.
 sudo apt install -y python3-picamera2 --no-install-recommends
 
 # Create python virtual environment
@@ -20,4 +21,4 @@ $pydir -m pip install --extra-index-url=https://wpilib.jfrog.io/artifactory/api/
 $pydir -m pip install --extra-index-url=https://wpilib.jfrog.io/artifactory/api/pypi/wpilib-python-release-2026/simple robotpy-apriltag
 
 # Install opencv & other packages
-$pydir -m pip install opencv-python-headless
+$pydir -m pip install opencv-contrib-python-headless

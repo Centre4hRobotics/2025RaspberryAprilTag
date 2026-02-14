@@ -4,7 +4,7 @@ import dataclasses
 from enum import Enum
 import json
 
-from src.apriltag import apriltag_estimator
+from src.apriltag import apriltag_estimator, apriltag
 from src.camera import camera
 from src import network_tables
 
@@ -34,7 +34,7 @@ class FilterList:
             self.list = []
             self.type = ListType.BLACKLIST
 
-    def filter_tags(self, tags):
+    def filter_tags(self, tags: list[apriltag.Apriltag]) -> list[apriltag.Apriltag]:
         """ Remove filtered entries from a list. """
 
         if self.type is ListType.WHITELIST:
@@ -52,7 +52,7 @@ class FilterList:
 class Settings:
     """ Store the settings generated in main.init() """
 
-    def __init__(self, config):
+    def __init__(self, config: str):
 
         with open(config, encoding="utf-8") as file:
             settings_json = json.load(file)

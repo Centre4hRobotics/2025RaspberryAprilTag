@@ -11,6 +11,8 @@
         }
     },
 
+    "field layout": "config/testing-field-layout.json",
+
     "whitelist": null,
     "blacklist": null
 }
