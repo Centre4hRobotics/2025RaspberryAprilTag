@@ -27,8 +27,6 @@ class Apriltag:
         self.tag_to_camera = Transform3d()
         self.global_pose = april_tag_field_layout.getTagPose(self.id)
 
-        self.camera_pose = Pose3d()
-
     def draw_corners(self, mat: cv2.typing.MatLike, line_color: tuple[int, int, int]):
         """ Draw the corners of this tag onto the screen """
 
