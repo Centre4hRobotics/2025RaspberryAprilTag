@@ -11,7 +11,7 @@
         }
     },
 
-    "field layout": "config/testing-field-layout.json",
+    "field layout": "config/2026-rebuilt-andymark.json",
 
     "whitelist": null,
     "blacklist": null

@@ -28,7 +28,7 @@ class NetworkTable:
 
         self.table = nt_instance.getTable("AprilTag Vision")
 
-        self.fpga_offset = self.table.getIntegerTopic("FPGA Offset").subscribe(time.time())
+        self.fpga_offset = self.table.getIntegerTopic("FPGA Offset").subscribe(time.time_ns())
 
         # Returns whether we have a tag
         self.has_tag = self.table.getBooleanTopic("AprilTag Presence").publish()
