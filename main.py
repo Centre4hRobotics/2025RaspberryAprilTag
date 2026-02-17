@@ -8,23 +8,26 @@ from src.apriltag import apriltag, multitag
 def main() -> None:
     """ Main loop """
 
+    # Initialize code
     init = settings.Settings("config/Settings.json")
 
+    # easier calling
     cam = init.camera
 
     # Retained variables
     robot_pose = None
     best_tag = None
 
+    # Save rvec and tvec from solvepnp calls
     rvec = None
     tvec = None
 
     while True:
 
-        # Reset local variables
+        # Declare local variable
         has_tag = False
 
-        # Update selections
+        # Update camera frame
         cam.update()
 
         detections = init.estimator.detector.detect(cam.get_frame()) # type: ignore
@@ -40,41 +43,39 @@ def main() -> None:
         if tags: # If there are tags to look at
             has_tag = True
 
+            # Get most centered tag
+            tag_x_pos = [abs(tag.x_dist(cam.calibration.x_res)) for tag in tags]
+            best_tag_index = tag_x_pos.index(min(tag_x_pos))
+
+            best_tag = tags[best_tag_index]
+            best_tag.draw_corners(cam.mat, (0, 255, 0))
+
             # Draw & undistort tags
             for tag in tags:
-                cam.mat = tag.draw_corners(cam.mat, (255, 255, 0))
+                if tag != best_tag:
+                    tag.draw_corners(cam.mat, (255, 255, 0))
 
                 tag.undistort_corners(cam.calibration)
 
                 tag.calculate_pose(init.estimator)
 
-            # Get most centered tag
-            tag_x_pos = [abs(x.x_dist(cam.calibration.x_res)) for x in tags]
-            best_tag_index = tag_x_pos.index(min(tag_x_pos))
-
-            best_tag = tags[best_tag_index]
-            cam.mat = best_tag.draw_corners(cam.mat, (0, 255, 0))
-
         # Crosshair
-        cam.mat = cv2.line(
+        cv2.line(
             cam.mat,
             (int( 10 + cam.calibration.x_res/2), int( 10 + cam.calibration.y_res/2)),
             (int(-10 + cam.calibration.x_res/2), int(-10 + cam.calibration.y_res/2)),
             (255, 0, 0), 2
         )
-        cam.mat = cv2.line(
+        cv2.line(
             cam.mat,
             (int( 10 + cam.calibration.x_res/2), int(-10 + cam.calibration.y_res/2)),
             (int(-10 + cam.calibration.x_res/2), int( 10 + cam.calibration.y_res/2)),
             (255, 0, 0), 2
         )
 
-
-
-
-
         # Publish everything to network tables
 
+        cam.rotate_mat()
         cam.output_stream.putFrame(cam.mat)
 
         init.tables.set_values(

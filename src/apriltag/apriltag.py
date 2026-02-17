@@ -4,14 +4,14 @@ import math
 
 import numpy
 import robotpy_apriltag
-from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem, Pose3d
+from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem
 import cv2
 
 from src.camera import calibration
 from src.apriltag import apriltag_estimator
 
 flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
-april_tag_field_layout = robotpy_apriltag.AprilTagFieldLayout("config/2026-rebuilt-andymark.json")
+april_tag_field_layout = robotpy_apriltag.AprilTagFieldLayout()
 
 
 class Apriltag:
@@ -21,13 +21,16 @@ class Apriltag:
 
         self.detection = detection
         self.id = detection.getId()
-        self.corners = list(self.detection.getCorners(tuple(numpy.empty(8).astype(float))))
+        self.corners = self.detection.getCorners(tuple(numpy.empty(8).astype(float)))
         self.undistorted_corners = self.corners
 
         self.tag_to_camera = Transform3d()
         self.global_pose = april_tag_field_layout.getTagPose(self.id)
 
-    def draw_corners(self, mat: cv2.typing.MatLike, line_color: tuple[int, int, int]):
+    def __ne__(self, other) -> bool:
+        return self.id != other.id
+
+    def draw_corners(self, mat: cv2.typing.MatLike, line_color: tuple[int, int, int]) -> None:
         """ Draw the corners of this tag onto the screen """
 
         for i in range(4):
@@ -37,8 +40,6 @@ class Apriltag:
             p2 = (int(self.corners[2 * j]),int(self.corners[2 * j + 1]))
 
             mat = cv2.line(mat, p1, p2, line_color, 2)
-
-        return mat
 
     def undistort_corners(self, camera_calibration: calibration.CameraCalibration) -> None:
         """ Undistort the corners of the apriltag (nessecary for accurate pose estimation) """
@@ -55,9 +56,13 @@ class Apriltag:
             camera_calibration.camera_distortion
         )
 
-        for i in range(4):
-            self.undistorted_corners[2 * i] = undistorted_corners[i][0][0]
-            self.undistorted_corners[2 * i + 1] = undistorted_corners[i][0][1]
+        # Flatten
+        self.undistorted_corners = tuple(
+            undistorted_corners[0][0][0], undistorted_corners[0][0][1], # type: ignore (pylance was being dumb)
+            undistorted_corners[1][0][0], undistorted_corners[1][0][1],
+            undistorted_corners[2][0][0], undistorted_corners[2][0][1],
+            undistorted_corners[3][0][0], undistorted_corners[3][0][1]
+        )
 
     def x_dist(self, x_res: int) -> float:
         """ Get the x-position (0 is the left side, 1 is the right) """
@@ -68,17 +73,20 @@ class Apriltag:
 
         cam_to_tag = estimator.pose_estimator.estimate(
             homography = self.detection.getHomography(),
-            corners = tuple(self.undistorted_corners)
+            corners = self.undistorted_corners
         )
 
         # Start by flipping the tag's rotation, to orient it as a viewer
-        cam_to_tag = Transform3d(cam_to_tag.translation(),
-                                    cam_to_tag.rotation().rotateBy(flip_tag_rotation))
+        cam_to_tag = Transform3d(
+            cam_to_tag.translation(),
+            cam_to_tag.rotation().rotateBy(flip_tag_rotation)
+        )
 
         # Change coordinate system from East/Down/North to a WPILib standard North/West/Up
         cam_to_tag = CoordinateSystem.convert(cam_to_tag,
-                                                    CoordinateSystem.EDN(),
-                                                    CoordinateSystem.NWU())
+            CoordinateSystem.EDN(),
+            CoordinateSystem.NWU()
+        )
 
         # Convert the transformation from camera->tag to tag->camera
         self.tag_to_camera = cam_to_tag.inverse()

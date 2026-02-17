@@ -6,8 +6,8 @@
     {
         "profile": "1280x800",
         "offset": {
-            "position": [0, 0, 0],
-            "rotation": [1, 0, 0, 0]
+            "position": {"x": 0, "y": 0, "z": 0},
+            "rotation": {"w": 1, "x": 0, "y": 0, "z": 0}
         }
     },
 

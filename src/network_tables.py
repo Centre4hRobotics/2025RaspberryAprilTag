@@ -28,6 +28,7 @@ class NetworkTable:
 
         self.table = nt_instance.getTable("AprilTag Vision")
 
+        # Should be in NS
         self.fpga_offset = self.table.getIntegerTopic("FPGA Offset").subscribe(time.time_ns())
 
         # Returns whether we have a tag
@@ -55,8 +56,9 @@ class NetworkTable:
         """ Set important network tables values """
         self.has_tag.set(has_tag)
 
-        # Publish global position
+        # Publish global position & timestamp
         if robot_pose is not None:
+            print(robot_pose.rotation().radians())
             self.robot_global_pose.set([robot_pose.x, robot_pose.y, robot_pose.rotation().radians()])
             self.pose_timestamp.set((time.time_ns() - self.fpga_offset.get()) / 1e9)
 
@@ -71,4 +73,3 @@ class NetworkTable:
 
             # Other
             self.best_tag_id.set(best_tag.id)
-            #self.tag_center_x.set(best_tag.detection.getCenter().x)

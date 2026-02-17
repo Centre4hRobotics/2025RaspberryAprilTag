@@ -19,15 +19,15 @@ class Camera:
     def __init__(self, _calibration: dict) -> None:
         CameraServer.enableLogging()
 
-        with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
+        with open('config/CameraProfiles.json', 'r', encoding='utf-8') as file:
             profiles = json.load(file)
 
-        profile = profiles[_calibration['profile']]["resolution"]
+        profile = profiles[_calibration['profile']]['resolution']
 
-        self.output_stream = CameraServer.putVideo("Vision", profile['x'], profile['y'])
+        self.output_stream = CameraServer.putVideo('Vision', profile['x'], profile['y'])
 
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(_calibration["profile"])
+        self.calibration = calibration.CameraCalibration(_calibration['profile'])
         offset = _calibration["offset"]
 
         # Initialize actual camera portion
@@ -45,16 +45,16 @@ class Camera:
         # Get the offset from JSON
         self.offset = Transform3d(
             Translation3d(
-                offset["position"][0],
-                offset["position"][1],
-                offset["position"][2]
+                x=offset['position']['x'],
+                y=offset['position']['y'],
+                z=offset['position']['z']
             ),
             Rotation3d(
                 Quaternion(
-                    offset["rotation"][0],
-                    offset["rotation"][1],
-                    offset["rotation"][2],
-                    offset["rotation"][3]
+                    w=offset['rotation']['w'],
+                    x=offset['rotation']['x'],
+                    y=offset['rotation']['y'],
+                    z=offset['rotation']['z']
                 )
             )
         )
@@ -86,3 +86,8 @@ class Camera:
     def get_frame(self):
         """ Get frame from camera (lazily) """
         return self.gray_mat
+
+    def rotate_mat(self):
+        """ Rotate mat to be top-up (MUST be done AFTER all processing) """
+        if self.rotate_dist is not None:
+            self.mat = cv2.rotate(self.mat, self.rotate_dist)
