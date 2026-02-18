@@ -4,6 +4,8 @@ import dataclasses
 from enum import Enum
 import json
 
+from robotpy_apriltag import AprilTagFieldLayout
+
 from src.apriltag import apriltag_estimator, apriltag
 from src.camera import camera
 from src import network_tables
@@ -75,4 +77,4 @@ class Settings:
         # Creating the network tables
         self.tables = network_tables.NetworkTable(is_table_host, team_number)
 
-        apriltag.april_tag_field_layout.loadField(settings_json["field layout"])
+        apriltag.april_tag_field_layout = AprilTagFieldLayout(settings_json["field layout"])

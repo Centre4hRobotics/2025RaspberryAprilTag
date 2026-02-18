@@ -58,7 +58,6 @@ class NetworkTable:
 
         # Publish global position & timestamp
         if robot_pose is not None:
-            print(robot_pose.rotation().radians())
             self.robot_global_pose.set([robot_pose.x, robot_pose.y, robot_pose.rotation().radians()])
             self.pose_timestamp.set((time.time_ns() - self.fpga_offset.get()) / 1e9)
 

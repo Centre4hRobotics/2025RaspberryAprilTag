@@ -57,7 +57,7 @@ class Apriltag:
         )
 
         # Flatten
-        self.undistorted_corners = tuple(
+        self.undistorted_corners: tuple[float, float, float, float, float, float, float, float] = (
             undistorted_corners[0][0][0], undistorted_corners[0][0][1], # type: ignore (pylance was being dumb)
             undistorted_corners[1][0][0], undistorted_corners[1][0][1],
             undistorted_corners[2][0][0], undistorted_corners[2][0][1],
