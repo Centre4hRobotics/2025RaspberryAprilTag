@@ -77,4 +77,4 @@ class Settings:
         # Creating the network tables
         self.tables = network_tables.NetworkTable(is_table_host, team_number)
 
-        apriltag.april_tag_field_layout = AprilTagFieldLayout(settings_json["field layout"])
+        self.field = AprilTagFieldLayout(settings_json["field layout"])

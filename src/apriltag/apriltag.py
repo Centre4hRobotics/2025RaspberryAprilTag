@@ -11,13 +11,11 @@ from src.camera import calibration
 from src.apriltag import apriltag_estimator
 
 flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
-april_tag_field_layout = robotpy_apriltag.AprilTagFieldLayout()
-
 
 class Apriltag:
     """ Represent apriltag data """
 
-    def __init__(self, detection: robotpy_apriltag.AprilTagDetection):
+    def __init__(self, detection: robotpy_apriltag.AprilTagDetection, field: robotpy_apriltag.AprilTagFieldLayout):
 
         self.detection = detection
         self.id = detection.getId()
@@ -25,7 +23,7 @@ class Apriltag:
         self.undistorted_corners = self.corners
 
         self.tag_to_camera = Transform3d()
-        self.global_pose = april_tag_field_layout.getTagPose(self.id)
+        self.global_pose = field.getTagPose(self.id)
 
     def __ne__(self, other) -> bool:
         return self.id != other.id

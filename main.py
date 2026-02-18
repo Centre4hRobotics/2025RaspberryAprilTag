@@ -32,7 +32,7 @@ def main() -> None:
 
         detections = init.estimator.detector.detect(cam.get_frame()) # type: ignore
 
-        tags = [apriltag.Apriltag(detection) for detection in detections]
+        tags = [apriltag.Apriltag(detection, init.field) for detection in detections]
 
         # Calculate global pose
         robot_pose, (rvec, tvec) = multitag.multi_tag_pose(tags, cam, rvec=rvec, tvec=tvec)
