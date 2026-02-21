@@ -7,12 +7,12 @@ from wpimath.geometry import Pose2d, Translation3d, Transform3d, Rotation3d, Coo
 from src.apriltag import apriltag
 from src.camera import camera
 
-half_tag = .5 * 6.5 * 25.4 * 1/1000 # 1/2 of tag size=(6.5" * 25.4mm/in * 1m/1000mm * 1/2)
+HALF_TAG = .5 * 6.5 * 25.4 * 1/1000 # 1/2 of tag size=(6.5" * 25.4mm/in * 1m/1000mm * 1/2)
 corner_offsets = [
-    Translation3d(0, -half_tag, -half_tag), # bottom left
-    Translation3d(0, half_tag, -half_tag), # bottom right
-    Translation3d(0, half_tag, half_tag), # top right
-    Translation3d(0, -half_tag, half_tag) # top left
+    Translation3d(0, -HALF_TAG, -HALF_TAG), # bottom left
+    Translation3d(0, HALF_TAG, -HALF_TAG), # bottom right
+    Translation3d(0, HALF_TAG, HALF_TAG), # top right
+    Translation3d(0, -HALF_TAG, HALF_TAG) # top left
 ]
 
 def multi_tag_pose(
@@ -27,6 +27,8 @@ def multi_tag_pose(
     # Get all corners
     screen_points = []
     world_points = []
+
+    tags.sort(reverse=True)
 
     for tag in tags:
         if tag.global_pose:
@@ -88,6 +90,8 @@ def multi_tag_pose(
         robot_rotation = inverse_transform.rotation()
         robot_pos = inverse_transform.translation()
 
+        #print([CoordinateSystem.convert(Translation3d(point), CoordinateSystem.EDN(), CoordinateSystem.NWU()).toVector() for point in world_points])
+        print(screen_points)
         return Pose2d(robot_pos.toTranslation2d(), robot_rotation.toRotation2d()), (rvec, tvec)
 
     # Should only happen with extraneous tags

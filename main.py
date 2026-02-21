@@ -75,6 +75,8 @@ def main() -> None:
 
         # Publish everything to network tables
 
+        print([t.id for t in tags])
+
         cam.rotate_mat()
         cam.output_stream.putFrame(cam.mat)
 

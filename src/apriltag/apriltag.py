@@ -28,6 +28,9 @@ class Apriltag:
     def __ne__(self, other) -> bool:
         return self.id != other.id
 
+    def __lt__(self, other) -> bool:
+        return self.id < other.id
+
     def draw_corners(self, mat: cv2.typing.MatLike, line_color: tuple[int, int, int]) -> None:
         """ Draw the corners of this tag onto the screen """
 
