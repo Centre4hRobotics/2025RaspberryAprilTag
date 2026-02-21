@@ -3,35 +3,42 @@
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-error_data = []
-tag_count = []
+class Plot:
+    """ Save data to a graph """
 
-#if robot_pose is not None and best_tag is not None and best_tag.global_pose is not None:
-#            error = robot_pose.y
-#            error_data.append((runtime, error))
-#            if len(tags) == 1:
-#                tag_count.append((runtime, (best_tag.id - 25) + .5))
-#                # 25 -> 1/2
-#                # 26 -> 3/2
-#            else:
-#                tag_count.append((runtime, len(tags)))
-#        else:
-#            error_data.append((runtime, numpy.nan))
-#            tag_count.append((runtime, 0))
+    def __init__(self, x_name: str, y1_name: str = "Y1", y2_name: str = "Y2"):
 
-x1, y1 = zip(*error_data)
-x2, y2 = zip(*tag_count)
+        self.data1: list[tuple] = []
+        self.data2: list[tuple] = []
 
-fig, ax1 = plt.subplots()
+        self.x_name = x_name
+        self.y1_name = y1_name
+        self.y2_name = y2_name
 
-ax1.plot(x1, y1)
-ax1.set_xlabel('Time')
-ax1.set_ylabel('Position (m)')
+        self.fig, self.ax1 = plt.subplots()
 
-ax2 = ax1.twinx()
+        if self.y2_name:
+            self.ax2 = self.ax1.twinx()
 
-ax2.plot(x2, y2, color='orange')
-ax2.set_ylabel('Best Tag')
-ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
+    def save_plot(self, file: str) -> None:
+        """ Save the plot with collected data to a file """
+        x1, y1 = zip(*self.data1)
+        x2, y2 = zip(*self.data2)
 
-fig.savefig("error.png")
+        self.ax1.plot(x1, y1)
+        self.ax1.set_xlabel(self.x_name)
+        self.ax1.set_ylabel(self.y1_name)
+
+        if self.y2_name:
+            self.ax2.plot(x2, y2, color='orange')
+            self.ax2.set_ylabel(self.y2_name)
+            self.ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        self.fig.savefig(file)
+
+    def add_data(self, x, data, plot_num: int = 1) -> None:
+        """ Add data to plots. plot_num determines which dataset to add to; data1 or data2 """
+        if plot_num == 1:
+            self.data1.append((x, data))
+        elif plot_num == 2:
+            self.data2.append((x, data))

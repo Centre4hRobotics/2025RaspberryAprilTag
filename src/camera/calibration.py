@@ -23,9 +23,7 @@ class CameraCalibration:
         self.x_res = camera_data["resolution"]["x"]
         self.y_res = camera_data["resolution"]["y"]
 
-        self.camera_distortion = numpy.array([
-            camera_data["distortion"]
-        ], dtype=numpy.float32) # pyright: ignore[reportArgumentType]
+        self.camera_distortion = numpy.array(camera_data["distortion"], dtype=numpy.float32)
 
         self.camera_intrinsics = numpy.eye(3)
         self.camera_intrinsics[0][0] = fx

@@ -54,6 +54,8 @@ def calibrate(board: aruco.CharucoBoard) -> tuple:
 
     ret, matrix, coeffs, _, _ = cv2.aruco.calibrateCameraCharuco(all_corners, all_ids, board, image_size, None, None)
 
+    print(f"{sum([len(corners) for corners in all_corners])} Corners;")
+
     return ret, matrix, coeffs, image_size
 
 def main() -> None:
@@ -75,8 +77,8 @@ def main() -> None:
             },
             "intrinsics": {
                 "Fx": float(matrix[0, 0]),
-                "Fy": float(matrix[0, 2]),
-                "Cx": float(matrix[1, 1]),
+                "Fy": float(matrix[1, 1]),
+                "Cx": float(matrix[0, 2]),
                 "Cy": float(matrix[1, 2])
             },
             "distortion": coeffs.tolist()[0],

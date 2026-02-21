@@ -2,7 +2,7 @@
 
 import numpy
 import cv2
-from wpimath.geometry import Pose2d, Translation3d, Transform3d, Rotation3d, CoordinateSystem
+from wpimath.geometry import Pose2d, Translation3d, Transform3d, Rotation3d#, CoordinateSystem
 
 from src.apriltag import apriltag
 from src.camera import camera
@@ -34,11 +34,11 @@ def multi_tag_pose(
         if tag.global_pose:
             for i in range(4):
                 world_points.append(
-                    CoordinateSystem.convert(
-                        (corner_offsets[i].rotateBy(tag.global_pose.rotation()) + tag.global_pose.translation()),
-                        CoordinateSystem.NWU(), # From
-                        CoordinateSystem.EDN()  # To
-                    ).toVector()
+                    #CoordinateSystem.convert(
+                        (corner_offsets[i].rotateBy(tag.global_pose.rotation()) + tag.global_pose.translation())
+                    #    CoordinateSystem.NWU(), # From
+                    #    CoordinateSystem.EDN()  # To
+                    .toVector()
                 )
                 screen_points.append([tag.corners[2 * i], tag.corners[2 * i + 1]])
 
@@ -50,9 +50,8 @@ def multi_tag_pose(
     if len(world_points) < 4:
         return None, (rvec, tvec)
 
-    # Distortions
+    # Convert camera constants to usable format
     distortion = numpy.array(cam.calibration.camera_distortion)
-    # Intrinsics
     intrinsics = numpy.array(cam.calibration.camera_intrinsics)
 
     # SolvePnP call (duh)
@@ -78,11 +77,11 @@ def multi_tag_pose(
         inverse_transform = Transform3d(Translation3d(t_inv), Rotation3d(r_inv))
 
         # Convert back to NWU coordinate system
-        inverse_transform = CoordinateSystem.convert(
-            inverse_transform,
-            CoordinateSystem.EDN(), # From
-            CoordinateSystem.NWU() # To
-        )
+        #inverse_transform = CoordinateSystem.convert(
+        #    inverse_transform,
+        #    CoordinateSystem.EDN(), # From
+        #    CoordinateSystem.NWU() # To
+        #)
 
         # Include camera offset
         inverse_transform = inverse_transform + cam.offset.inverse()
