@@ -1,10 +1,10 @@
 {
-    "is table host": true,
+    "is table host": false,
     "team number": 7204,
 
     "camera":
     {
-        "profile": "photon_1280x800",
+        "profile": "opencv_1280x800",
         "offset": {
             "position": {"x": 0, "y": 0, "z": 0},
             "rotation": {"w": 1, "x": 0, "y": 0, "z": 0}

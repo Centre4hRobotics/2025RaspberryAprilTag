@@ -87,13 +87,12 @@ def main() -> None:
             # Publish everything to network tables
 
             runtime = time.time() - start_time
-            if best_tag:
-                plot.add_data(runtime, best_tag.tag_to_camera.y, 1)
-                plot.add_data(runtime, best_tag.id, 2)
+            if robot_pose:
+                plot.add_data(runtime, robot_pose.translation().y, 1)
+                plot.add_data(runtime, len(tags), 2)
             else:
                 plot.add_data(runtime, numpy.nan, 1)
                 plot.add_data(runtime, numpy.nan, 2)
-
 
             cam.rotate_mat()
             cam.output_stream.putFrame(cam.mat)
