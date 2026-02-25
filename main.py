@@ -18,7 +18,7 @@ def main() -> None:
     try:
         # Initialize code
         init = settings.Settings("config/Settings.json")
-
+        print("initialized tables & stuff")
         # easier calling
         cam = init.camera
 

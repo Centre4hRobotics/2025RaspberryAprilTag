@@ -12,6 +12,8 @@ sudo apt install -y python3-picamera2 --no-install-recommends
 python -m venv --system-site-packages .venv
 pydir=./.venv/bin/python
 
+echo "Created Virtual Environment. It is located at $pydir"
+
 # Install required PIP packages
 
 # Install robotpy
@@ -22,3 +24,5 @@ $pydir -m pip install --extra-index-url=https://wpilib.jfrog.io/artifactory/api/
 
 # Install opencv & other packages
 $pydir -m pip install opencv-contrib-python-headless
+
+$pydir -m pip install matplotlib

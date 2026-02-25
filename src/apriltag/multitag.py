@@ -76,21 +76,12 @@ def multi_tag_pose(
         # Compose results into Transform3d
         inverse_transform = Transform3d(Translation3d(t_inv), Rotation3d(r_inv))
 
-        # Convert back to NWU coordinate system
-        #inverse_transform = CoordinateSystem.convert(
-        #    inverse_transform,
-        #    CoordinateSystem.EDN(), # From
-        #    CoordinateSystem.NWU() # To
-        #)
-
         # Include camera offset
         inverse_transform = inverse_transform + cam.offset.inverse()
 
         robot_rotation = inverse_transform.rotation()
         robot_pos = inverse_transform.translation()
 
-        #print([CoordinateSystem.convert(Translation3d(point), CoordinateSystem.EDN(), CoordinateSystem.NWU()).toVector() for point in world_points])
-        print(screen_points)
         return Pose2d(robot_pos.toTranslation2d(), robot_rotation.toRotation2d()), (rvec, tvec)
 
     # Should only happen with extraneous tags

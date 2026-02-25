@@ -2,6 +2,7 @@
 
 import json
 import dataclasses
+import typing
 
 import cv2
 import numpy
@@ -11,36 +12,25 @@ from cscore import CameraServer
 
 from src.camera import calibration
 
-
 @dataclasses.dataclass
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, _calibration: dict) -> None:
+    def __init__(self, calibration_: dict, capture_type: typing.Type) -> None:
         CameraServer.enableLogging()
 
         with open('config/CameraProfiles.json', 'r', encoding='utf-8') as file:
             profiles = json.load(file)
 
-        profile = profiles[_calibration['profile']]['resolution']
+        profile = profiles[calibration_['profile']]['resolution']
 
         self.output_stream = CameraServer.putVideo('Vision', profile['x'], profile['y'])
 
+        self.capture = capture_type(profile)
+
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(_calibration['profile'])
-        offset = _calibration["offset"]
-
-        # Initialize actual camera portion
-        self.cam = picamera2.Picamera2()
-
-        camera_config = self.cam.create_video_configuration(
-            main={
-                'size': (profile['x'], profile['y'])
-            }
-        )
-
-        self.cam.configure(camera_config)
-        self.cam.start()
+        self.calibration = calibration.CameraCalibration(calibration_['profile'])
+        offset = calibration_["offset"]
 
         # Get the offset from JSON
         self.offset = Transform3d(
@@ -75,7 +65,7 @@ class Camera:
     def update(self):
         """ Update images to latest """
 
-        self.mat = self.cam.capture_array()
+        self.mat = self.capture.get_frame()
 
         # Rotate image to be top-up
         if self.rotate_dist is not None:
