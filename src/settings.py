@@ -3,7 +3,6 @@
 import dataclasses
 from enum import Enum
 import json
-import typing
 
 from robotpy_apriltag import AprilTagFieldLayout
 

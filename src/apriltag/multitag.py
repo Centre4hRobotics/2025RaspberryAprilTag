@@ -22,7 +22,7 @@ def multi_tag_pose(
         tvec: cv2.typing.MatLike | None = None
     ) -> tuple[Pose2d | None, tuple[cv2.typing.MatLike | None, cv2.typing.MatLike | None]]:
 
-    """ Use SolvePNP to find the robot's pose. """
+    """ Use SolvePNP to find the camera's global pose. """
 
     # Get all corners
     screen_points = []
@@ -75,9 +75,6 @@ def multi_tag_pose(
 
         # Compose results into Transform3d
         inverse_transform = Transform3d(Translation3d(t_inv), Rotation3d(r_inv))
-
-        # Include camera offset
-        inverse_transform = inverse_transform + cam.offset.inverse()
 
         robot_rotation = inverse_transform.rotation()
         robot_pos = inverse_transform.translation()

@@ -36,7 +36,7 @@ class NetworkTable:
 
         # Global position of the robot
         # [x, y, theta]
-        self.robot_global_pose = self.table.getDoubleArrayTopic("Robot Global Pose").publish()
+        self.global_pose = self.table.getDoubleArrayTopic("Global Pose").publish()
 
         # Tag to camera transform (this is more useful than the raw pose)
         # [x, y, theta]
@@ -58,17 +58,18 @@ class NetworkTable:
 
         # Publish global position & timestamp
         if robot_pose is not None:
-            self.robot_global_pose.set([robot_pose.x, robot_pose.y, robot_pose.rotation().radians()])
+
+            self.global_pose.set([robot_pose.x, robot_pose.y, robot_pose.rotation().radians()])
             self.pose_timestamp.set((time.time_ns() - self.fpga_offset.get()) / 1e9)
 
         if best_tag:
             # Publish local position & rotation
 
             # Calculate theta
-            theta = best_tag.tag_to_camera.rotation().z
+            theta = best_tag.tag_to_camera.rotation().Z()
             theta -= numpy.sign(theta) * math.pi
 
-            self.tag_to_camera.set([best_tag.tag_to_camera.x, best_tag.tag_to_camera.y, theta])
+            self.tag_to_camera.set([best_tag.tag_to_camera.X(), best_tag.tag_to_camera.Y(), theta])
 
             # Other
             self.best_tag_id.set(best_tag.id)
