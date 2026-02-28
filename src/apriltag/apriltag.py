@@ -7,7 +7,8 @@ import robotpy_apriltag
 from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem
 import cv2
 
-from src import camera, apriltag
+from src import camera
+from . import apriltag_estimator
 
 flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
 
@@ -68,7 +69,7 @@ class Apriltag:
         """ Get the x-position (0 is the left side, 1 is the right) """
         return (2 * self.detection.getCenter().x - x_res) / x_res
 
-    def calculate_pose(self, estimator: apriltag.apriltag_estimator.ApriltagEstimator) -> Transform3d:
+    def calculate_pose(self, estimator: apriltag_estimator.ApriltagEstimator) -> Transform3d:
         """ Calculate the pose of the camera relative to the tag """
 
         cam_to_tag = estimator.pose_estimator.estimate(
