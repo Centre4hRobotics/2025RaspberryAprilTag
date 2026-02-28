@@ -2,10 +2,9 @@
 
 import numpy
 import cv2
-from wpimath.geometry import Pose2d, Translation3d, Transform3d, Rotation3d#, CoordinateSystem
+from wpimath.geometry import Pose2d, Translation3d, Pose3d, Rotation3d
 
-from src.apriltag import apriltag
-from src.camera import camera
+from src import apriltag, camera
 
 HALF_TAG = .5 * 6.5 * 25.4 * 1/1000 # 1/2 of tag size=(6.5" * 25.4mm/in * 1m/1000mm * 1/2)
 corner_offsets = [
@@ -14,6 +13,18 @@ corner_offsets = [
     Translation3d(0, HALF_TAG, HALF_TAG), # top right
     Translation3d(0, -HALF_TAG, HALF_TAG) # top left
 ]
+
+def pose_from_vecs(rvec: cv2.typing.MatLike, tvec: cv2.typing.MatLike) -> Pose2d:
+    """ Calculate pose from rvec and tvec given by SolvePnP """
+    r, _ = cv2.Rodrigues(rvec)
+
+    r_inv = r.T
+    t_inv = -r.T @ tvec
+
+    # Compose results into Transform3d
+    inverse_transform = Pose3d(Translation3d(t_inv), Rotation3d(r_inv))
+
+    return inverse_transform.toPose2d()
 
 def multi_tag_pose(
         tags: list[apriltag.Apriltag],
@@ -55,7 +66,7 @@ def multi_tag_pose(
     intrinsics = numpy.array(cam.calibration.camera_intrinsics)
 
     # SolvePnP call (duh)
-    success, rvec, tvec = cv2.solvePnP(
+    success, new_rvec, new_tvec = cv2.solvePnP(
         world_points,
         screen_points,
         intrinsics,
@@ -68,18 +79,14 @@ def multi_tag_pose(
 
     if success:
 
-        r, _ = cv2.Rodrigues(rvec)
+        new_pose = pose_from_vecs(new_rvec, new_tvec)
 
-        r_inv = r.T
-        t_inv = -r.T @ tvec
+        #if rvec is not None and tvec is not None:
+        #    old_pose = pose_from_vecs(rvec, tvec)
+        #    if old_pose.translation().distance(new_pose.translation()) >= 0.5*0.5:
+        #        return None, (rvec, tvec)
 
-        # Compose results into Transform3d
-        inverse_transform = Transform3d(Translation3d(t_inv), Rotation3d(r_inv))
-
-        robot_rotation = inverse_transform.rotation()
-        robot_pos = inverse_transform.translation()
-
-        return Pose2d(robot_pos.toTranslation2d(), robot_rotation.toRotation2d()), (rvec, tvec)
+        return new_pose, (new_rvec, new_tvec)
 
     # Should only happen with extraneous tags
     return None, (None, None)

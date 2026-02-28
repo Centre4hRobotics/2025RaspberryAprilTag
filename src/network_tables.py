@@ -8,7 +8,7 @@ import numpy
 from wpimath.geometry import Pose2d
 import ntcore
 
-from src.apriltag import apriltag
+from src import apriltag
 
 @dataclasses.dataclass
 class NetworkTable:
@@ -33,28 +33,24 @@ class NetworkTable:
 
         # Returns whether we have a tag
         self.has_tag = self.table.getBooleanTopic("AprilTag Presence").publish()
+        self.tag_count = self.table.getIntegerTopic("AprilTag Count").publish()
 
         # Global position of the robot
         # [x, y, theta]
         self.global_pose = self.table.getDoubleArrayTopic("Global Pose").publish()
+        self.pose_timestamp = self.table.getDoubleTopic("Global Pose Timestamp").publish()
+
+        # Which tag is "best" (most centered)
+        self.best_tag_id = self.table.getIntegerTopic("Best Tag ID").publish()
 
         # Tag to camera transform (this is more useful than the raw pose)
         # [x, y, theta]
         self.tag_to_camera = self.table.getDoubleArrayTopic("Tag To Camera Pose").publish()
 
-        # Raw tag center (just the raw center of the tag with no pose estimation.
-        # Should be more stable when we're fine tuning our pose)
-        # Is a value from -1 to 1
-        #self.tag_center_x = self.table.getDoubleTopic("Tag Center X").publish()
-
-        # Which tag is "best" (most centered)
-        self.best_tag_id = self.table.getIntegerTopic("Best Tag ID").publish()
-
-        self.pose_timestamp = self.table.getDoubleTopic("Global Pose Timestamp").publish()
-
-    def set_values(self, has_tag: bool, robot_pose: Pose2d | None, best_tag: apriltag.Apriltag | None) -> None:
+    def set_values(self, tags, robot_pose: Pose2d | None, best_tag: apriltag.Apriltag | None) -> None:
         """ Set important network tables values """
-        self.has_tag.set(has_tag)
+        self.has_tag.set(tags != [])
+        self.tag_count.set(len(tags))
 
         # Publish global position & timestamp
         if robot_pose is not None:

@@ -5,11 +5,9 @@ import dataclasses
 
 import cv2
 import numpy
-import picamera2
-from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
 
-from src.camera import calibration, camera_capture
+from . import calibration, camera_capture
 
 @dataclasses.dataclass
 class Camera:

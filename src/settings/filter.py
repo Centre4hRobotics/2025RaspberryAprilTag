@@ -1,14 +1,9 @@
-""" Store the settings for the tags & stuff """
+""" Filter Apriltags """
 
-import dataclasses
 from enum import Enum
-import json
+import dataclasses
 
-from robotpy_apriltag import AprilTagFieldLayout
-
-from src.apriltag import apriltag_estimator, apriltag
-from src.camera import camera, camera_capture
-from src import network_tables
+from src import apriltag
 
 class ListType(Enum):
     """ Determine which type of List (blacklist or whitelist) is being used. """
@@ -49,32 +44,3 @@ class FilterList:
             tag for tag in tags
             if tag.id not in self.list and tag.id <= 32
         ] # filter elements in blacklist
-
-@dataclasses.dataclass
-class Settings:
-    """ Store the settings generated in main.init() """
-
-    def __init__(self, config: str, camera_type: camera_capture.CaptureBase):
-
-        with open(config, encoding="utf-8") as file:
-            settings_json = json.load(file)
-
-        is_table_host: bool = settings_json["is table host"]
-        team_number: int = settings_json["team number"]
-
-        # Set the filter list
-        self.filter_list = FilterList(settings_json)
-
-        # Camera Stuff
-        camera_data = settings_json["camera"]
-
-        # Note: This may or may not work, I'm just guessing how cameras are assigned
-        self.camera = camera.Camera(camera_data, camera_type)
-
-        # Create the PoseEstimator & adjust its settings
-        self.estimator = apriltag_estimator.ApriltagEstimator(self.camera.calibration)
-
-        # Creating the network tables
-        self.tables = network_tables.NetworkTable(is_table_host, team_number)
-
-        self.field = AprilTagFieldLayout(settings_json["field layout"])

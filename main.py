@@ -5,17 +5,16 @@ import time
 import cv2
 import numpy
 
-from src import settings, debug
-from src.apriltag import apriltag, multitag
+from src import apriltag, settings, debug
 
-from cameras import picamera_capture
+from cameras.picamera_capture import PiCamCapture
 
 
 def main() -> None:
     """ Main loop """
 
     # Initialize code
-    init = settings.Settings("config/Settings.json", picamera_capture.PiCamCapture())
+    init = settings.Settings("config/Settings.json", PiCamCapture())
     print("initialized tables & stuff")
     # easier calling
     cam = init.camera
@@ -33,9 +32,6 @@ def main() -> None:
 
     while True:
 
-        # Declare local variable
-        has_tag = False
-
         # Update camera frame
         cam.update()
 
@@ -44,13 +40,12 @@ def main() -> None:
         tags = [apriltag.Apriltag(detection, init.field) for detection in detections]
 
         # Calculate global pose
-        global_pose, (rvec, tvec) = multitag.multi_tag_pose(tags, cam, rvec=rvec, tvec=tvec)
+        global_pose, (rvec, tvec) = apriltag.multi_tag_pose(tags, cam, rvec=rvec, tvec=tvec)
 
         # Change tags based on whitelist/blacklist
         tags = init.filter_list.filter_tags(tags)
 
-        if tags: # If there are tags to look at
-            has_tag = True
+        if tags != []: # If there are tags to look at
 
             # Get most centered tag
             tag_x_pos = [abs(tag.x_dist(cam.calibration.x_res)) for tag in tags]
@@ -97,7 +92,7 @@ def main() -> None:
 
         init.tables.set_values(
             # General
-            has_tag,
+            tags,
             global_pose,
             # Centered Tag
             best_tag

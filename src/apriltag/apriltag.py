@@ -7,8 +7,7 @@ import robotpy_apriltag
 from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem
 import cv2
 
-from src.camera import calibration
-from src.apriltag import apriltag_estimator
+from src import camera, apriltag
 
 flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
 
@@ -42,7 +41,7 @@ class Apriltag:
 
             mat = cv2.line(mat, p1, p2, line_color, 2)
 
-    def undistort_corners(self, camera_calibration: calibration.CameraCalibration) -> None:
+    def undistort_corners(self, camera_calibration: camera.calibration.CameraCalibration) -> None:
         """ Undistort the corners of the apriltag (nessecary for accurate pose estimation) """
 
         distorted_corners = numpy.empty([4,2], dtype=numpy.float32)
@@ -69,7 +68,7 @@ class Apriltag:
         """ Get the x-position (0 is the left side, 1 is the right) """
         return (2 * self.detection.getCenter().x - x_res) / x_res
 
-    def calculate_pose(self, estimator: apriltag_estimator.ApriltagEstimator) -> Transform3d:
+    def calculate_pose(self, estimator: apriltag.apriltag_estimator.ApriltagEstimator) -> Transform3d:
         """ Calculate the pose of the camera relative to the tag """
 
         cam_to_tag = estimator.pose_estimator.estimate(
