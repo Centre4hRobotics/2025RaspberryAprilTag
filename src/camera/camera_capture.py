@@ -6,6 +6,7 @@ import cv2
 
 class CaptureBase(abc.ABC):
     """ Define a base class for camera captures """
+
     @abc.abstractmethod
     def set_profile(self, profile: dict) -> None:
         """ Set camera profile """

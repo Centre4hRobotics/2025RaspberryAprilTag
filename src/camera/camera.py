@@ -15,13 +15,13 @@ from src.camera import calibration, camera_capture
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, calibration_: dict, capture: camera_capture.CaptureBase) -> None:
+    def __init__(self, camera_settings: dict, capture: camera_capture.CaptureBase) -> None:
         CameraServer.enableLogging()
 
         with open('config/CameraProfiles.json', 'r', encoding='utf-8') as file:
             profiles = json.load(file)
 
-        profile = profiles[calibration_['profile']]['resolution']
+        profile = profiles[camera_settings['profile']]['resolution']
 
         self.output_stream = CameraServer.putVideo('Vision', profile['x'], profile['y'])
 
@@ -29,25 +29,7 @@ class Camera:
         self.capture.set_profile(profile)
 
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(calibration_['profile'])
-        offset = calibration_["offset"]
-
-        # Get the offset from JSON
-        self.offset = Transform3d(
-            Translation3d(
-                x=offset['position']['x'],
-                y=offset['position']['y'],
-                z=offset['position']['z']
-            ),
-            Rotation3d(
-                Quaternion(
-                    w=offset['rotation']['w'],
-                    x=offset['rotation']['x'],
-                    y=offset['rotation']['y'],
-                    z=offset['rotation']['z']
-                )
-            )
-        )
+        self.calibration = calibration.CameraCalibration(camera_settings['profile'])
 
         # Initialize image
         self.mat = numpy.zeros(
@@ -67,17 +49,13 @@ class Camera:
 
         self.mat = self.capture.get_frame()
 
-        # Rotate image to be top-up
-        if self.rotate_dist is not None:
-            self.mat = cv2.rotate(self.mat, self.rotate_dist)
-
         self.gray_mat = cv2.cvtColor(self.mat, cv2.COLOR_RGB2GRAY)
 
     def get_frame(self):
-        """ Get frame from camera (lazily) """
+        """ Get frame from camera """
         return self.gray_mat
 
     def rotate_mat(self):
-        """ Rotate mat to be top-up (MUST be done AFTER all processing) """
+        """ Rotate mat to be top-up (**MUST** be done **AFTER** all processing!!) """
         if self.rotate_dist is not None:
             self.mat = cv2.rotate(self.mat, self.rotate_dist)
