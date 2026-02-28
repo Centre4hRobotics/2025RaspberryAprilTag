@@ -9,6 +9,8 @@ from src import settings
 from src.apriltag import apriltag, multitag
 from src.debug import Plot
 
+from cameras import picamera_capture
+
 
 def main() -> None:
     """ Main loop """
@@ -17,7 +19,7 @@ def main() -> None:
 
     try:
         # Initialize code
-        init = settings.Settings("config/Settings.json")
+        init = settings.Settings("config/Settings.json", picamera_capture.PiCamCapture())
         print("initialized tables & stuff")
         # easier calling
         cam = init.camera

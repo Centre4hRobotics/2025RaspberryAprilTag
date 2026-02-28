@@ -3,12 +3,14 @@
 import picamera2
 import cv2
 
-from camera_capture import CaptureBase
+from src.camera.camera_capture import CaptureBase
 
 class PiCamCapture(CaptureBase):
-    def __init__(self, profile: dict):
+    """ Implement Picamera2 for camera captures (required for Luma P1) """
+    def __init__(self):
         self.capture = picamera2.Picamera2()
 
+    def set_profile(self, profile: dict) -> None:
         camera_config = self.capture.create_video_configuration(
             main={
                 'size': (profile['x'], profile['y'])

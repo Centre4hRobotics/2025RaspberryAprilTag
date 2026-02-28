@@ -3,11 +3,12 @@
 import dataclasses
 from enum import Enum
 import json
+import typing
 
 from robotpy_apriltag import AprilTagFieldLayout
 
 from src.apriltag import apriltag_estimator, apriltag
-from src.camera import camera
+from src.camera import camera, camera_capture
 from src import network_tables
 
 class ListType(Enum):
@@ -54,7 +55,7 @@ class FilterList:
 class Settings:
     """ Store the settings generated in main.init() """
 
-    def __init__(self, config: str):
+    def __init__(self, config: str, camera_type: camera_capture.CaptureBase):
 
         with open(config, encoding="utf-8") as file:
             settings_json = json.load(file)
@@ -69,7 +70,7 @@ class Settings:
         camera_data = settings_json["camera"]
 
         # Note: This may or may not work, I'm just guessing how cameras are assigned
-        self.camera = camera.Camera(camera_data, camera.)
+        self.camera = camera.Camera(camera_data, camera_type)
 
         # Create the PoseEstimator & adjust its settings
         self.estimator = apriltag_estimator.ApriltagEstimator(self.camera.calibration)

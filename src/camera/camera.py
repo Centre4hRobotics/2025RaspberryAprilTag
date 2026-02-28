@@ -2,7 +2,6 @@
 
 import json
 import dataclasses
-import typing
 
 import cv2
 import numpy
@@ -10,13 +9,13 @@ import picamera2
 from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
 
-from src.camera import calibration
+from src.camera import calibration, camera_capture
 
 @dataclasses.dataclass
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, calibration_: dict, capture_type: typing.Type) -> None:
+    def __init__(self, calibration_: dict, capture: camera_capture.CaptureBase) -> None:
         CameraServer.enableLogging()
 
         with open('config/CameraProfiles.json', 'r', encoding='utf-8') as file:
@@ -26,7 +25,8 @@ class Camera:
 
         self.output_stream = CameraServer.putVideo('Vision', profile['x'], profile['y'])
 
-        self.capture = capture_type(profile)
+        self.capture = capture
+        self.capture.set_profile(profile)
 
         # Get values from JSON
         self.calibration = calibration.CameraCalibration(calibration_['profile'])

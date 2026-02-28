@@ -5,10 +5,11 @@ import abc
 import cv2
 
 class CaptureBase(abc.ABC):
+    """ Define a base class for camera captures """
     @abc.abstractmethod
-    def __init__(self, profile: dict):
-        pass
+    def set_profile(self, profile: dict) -> None:
+        """ Set camera profile """
 
     @abc.abstractmethod
     def get_frame(self) -> cv2.typing.MatLike:
-        pass
+        """ Get frame from camera """
