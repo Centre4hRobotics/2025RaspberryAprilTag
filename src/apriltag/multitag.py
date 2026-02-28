@@ -81,10 +81,10 @@ def multi_tag_pose(
 
         new_pose = pose_from_vecs(new_rvec, new_tvec)
 
-        #if rvec is not None and tvec is not None:
-        #    old_pose = pose_from_vecs(rvec, tvec)
-        #    if old_pose.translation().distance(new_pose.translation()) >= 0.5*0.5:
-        #        return None, (rvec, tvec)
+        if rvec is not None and tvec is not None:
+            old_pose = pose_from_vecs(rvec, tvec)
+            if old_pose.translation().distance(new_pose.translation()) >= 0.5*0.5 and len(world_points) < 8:
+                return None, (rvec, tvec)
 
         return new_pose, (new_rvec, new_tvec)
 
