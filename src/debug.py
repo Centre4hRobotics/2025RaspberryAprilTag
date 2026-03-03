@@ -3,42 +3,50 @@
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-class Plot:
-    """ Save data to a graph """
+data1: list[tuple] = []
+data2: list[tuple] = []
 
-    def __init__(self, x_name: str, y1_name: str = "Y1", y2_name: str = "Y2"):
+x_name: str = ""
+y1_name: str = ""
+y2_name: str | None = None
 
-        self.data1: list[tuple] = []
-        self.data2: list[tuple] = []
+figure = None
+ax1 = None
+ax2 = None
 
-        self.x_name = x_name
-        self.y1_name = y1_name
-        self.y2_name = y2_name
+def create_plot(x_axis_name: str, y1_axis_name: str = "Y1", y2_axis_name: str | None = None):
+    """ Initialize the plot """
+    global x_name, y1_name, y2_name, figure, ax1, ax2
 
-        self.fig, self.ax1 = plt.subplots()
+    x_name = x_axis_name
+    y1_name = y1_axis_name
+    y2_name = y2_axis_name
 
-        if self.y2_name:
-            self.ax2 = self.ax1.twinx()
+    figure, ax1 = plt.subplots()
 
-    def save_plot(self, file: str) -> None:
-        """ Save the plot with collected data to a file """
-        x1, y1 = zip(*self.data1)
-        x2, y2 = zip(*self.data2)
+    if y2_name is not None:
+        ax2 = ax1.twinx()
 
-        self.ax1.plot(x1, y1)
-        self.ax1.set_xlabel(self.x_name)
-        self.ax1.set_ylabel(self.y1_name)
+def save_plot(file: str) -> None:
+    """ Save plot to file """
+    x1, y1 = zip(*data1)
+    x2, y2 = zip(*data2)
 
-        if self.y2_name:
-            self.ax2.plot(x2, y2, color='orange')
-            self.ax2.set_ylabel(self.y2_name)
-            self.ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
+    if ax1 and figure:
+        ax1.plot(x1, y1)
+        ax1.set_xlabel(x_name)
+        ax1.set_ylabel(y1_name)
 
-        self.fig.savefig(file)
+        if y2_name and ax2:
+            ax2.plot(x2, y2, color='orange')
+            ax2.set_ylabel(y2_name)
+            ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-    def add_data(self, x, data, plot_num: int = 1) -> None:
-        """ Add data to plots. plot_num determines which dataset to add to; data1 or data2 """
-        if plot_num == 1:
-            self.data1.append((x, data))
-        elif plot_num == 2:
-            self.data2.append((x, data))
+        figure.savefig(file)
+
+def add_data(x, data, plot_num: int = 1) -> None:
+    """ Add data to plots. plot_num determines which dataset to add to; data1 or data2 """
+    if plot_num == 1:
+        data1.append((x, data))
+    elif plot_num == 2:
+        data2.append((x, data))

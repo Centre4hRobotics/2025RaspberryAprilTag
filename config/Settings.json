@@ -1,14 +1,10 @@
 {
-    "is table host": false,
+    "is table host": true,
     "team number": 7204,
 
     "camera":
     {
-        "profile": "opencv_1280x800",
-        "offset": {
-            "position": {"x": 0, "y": 0, "z": 0},
-            "rotation": {"w": 1, "x": 0, "y": 0, "z": 0}
-        }
+        "profile": "opencv_1280x800"
     },
 
     "field layout": "config/2026-rebuilt-andymark.json",

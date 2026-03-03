@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 
 from src import settings
+from cameras.picamera_capture import PiCamCapture
 
 def take_images(init: settings.Settings, camera_lock: threading.Lock):
     """ Take CLI input to take photos """
@@ -33,7 +34,7 @@ def main() -> None:
 
     camera_lock = threading.Lock()
 
-    init = settings.Settings("config/Settings.json")
+    init = settings.Settings("config/Settings.json", PiCamCapture())
 
     input_thread = threading.Thread(target=take_images, args=(init, camera_lock), daemon=True)
     input_thread.start()

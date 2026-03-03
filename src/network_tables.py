@@ -8,7 +8,7 @@ import numpy
 from wpimath.geometry import Pose2d
 import ntcore
 
-from src.apriltag import apriltag
+from src import apriltag
 
 @dataclasses.dataclass
 class NetworkTable:
@@ -33,42 +33,39 @@ class NetworkTable:
 
         # Returns whether we have a tag
         self.has_tag = self.table.getBooleanTopic("AprilTag Presence").publish()
+        self.tag_count = self.table.getIntegerTopic("AprilTag Count").publish()
 
         # Global position of the robot
         # [x, y, theta]
-        self.robot_global_pose = self.table.getDoubleArrayTopic("Robot Global Pose").publish()
+        self.global_pose = self.table.getDoubleArrayTopic("Global Pose").publish()
+        self.pose_timestamp = self.table.getDoubleTopic("Global Pose Timestamp").publish()
+
+        # Which tag is "best" (most centered)
+        self.best_tag_id = self.table.getIntegerTopic("Best Tag ID").publish()
 
         # Tag to camera transform (this is more useful than the raw pose)
         # [x, y, theta]
         self.tag_to_camera = self.table.getDoubleArrayTopic("Tag To Camera Pose").publish()
 
-        # Raw tag center (just the raw center of the tag with no pose estimation.
-        # Should be more stable when we're fine tuning our pose)
-        # Is a value from -1 to 1
-        #self.tag_center_x = self.table.getDoubleTopic("Tag Center X").publish()
-
-        # Which tag is "best" (most centered)
-        self.best_tag_id = self.table.getIntegerTopic("Best Tag ID").publish()
-
-        self.pose_timestamp = self.table.getDoubleTopic("Global Pose Timestamp").publish()
-
-    def set_values(self, has_tag: bool, robot_pose: Pose2d | None, best_tag: apriltag.Apriltag | None) -> None:
+    def set_values(self, tags, robot_pose: Pose2d | None, best_tag: apriltag.Apriltag | None) -> None:
         """ Set important network tables values """
-        self.has_tag.set(has_tag)
+        self.has_tag.set(tags != [])
+        self.tag_count.set(len(tags))
 
         # Publish global position & timestamp
         if robot_pose is not None:
-            self.robot_global_pose.set([robot_pose.x, robot_pose.y, robot_pose.rotation().degrees()])
+
+            self.global_pose.set([robot_pose.x, robot_pose.y, robot_pose.rotation().radians()])
             self.pose_timestamp.set((time.time_ns() - self.fpga_offset.get()) / 1e9)
 
         if best_tag:
             # Publish local position & rotation
 
             # Calculate theta
-            theta = best_tag.tag_to_camera.rotation().z
+            theta = best_tag.tag_to_camera.rotation().Z()
             theta -= numpy.sign(theta) * math.pi
 
-            self.tag_to_camera.set([best_tag.tag_to_camera.x, best_tag.tag_to_camera.y, theta])
+            self.tag_to_camera.set([best_tag.tag_to_camera.X(), best_tag.tag_to_camera.Y(), theta])
 
             # Other
             self.best_tag_id.set(best_tag.id)
