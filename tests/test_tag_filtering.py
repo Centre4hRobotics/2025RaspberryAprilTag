@@ -2,74 +2,85 @@ import pytest
 from unittest.mock import MagicMock
 from src.settings.filter import FilterList
 
-# Helper function to simulate a Tag object. 
-# MagicMock allows us to create an object that 'acts' like a real Tag 
-# without needing the actual database or class logic.
+# --- Helper Function ---
+
 def create_mock_tag(tag_id):
+    """ 
+    Creates a 'stunt double' for a Tag. 
+    Instead of building a real, complex Tag object, we use MagicMock 
+    to create a simple object that just has an 'id' number.
+    """
     tag = MagicMock()
     tag.id = tag_id
     return tag
 
-# @pytest.mark.parametrize is a 'test multiplier'. 
-# It runs the same test function multiple times using the data provided below.
-# The string "config, input_ids, expected_ids" tells pytest which arguments to 
-# inject into the function.
+# --- Multi-Scenario Testing ---
+
+# @pytest.mark.parametrize acts like a 'test factory'. 
+# It runs the function below 4 different times, plugging in the 'config', 
+# 'input_ids', and 'expected_ids' for each scenario.
 @pytest.mark.parametrize("config, input_ids, expected_ids", [
     (
-        # Case 1: Whitelist (Keep first 10 out of 32)
+        # Scenario 1: Whitelist Mode
+        # Only allow specific IDs (1 through 10) to pass through.
         {"whitelist": list(range(1, 11)), "blacklist": None}, 
         list(range(1, 33)), 
         list(range(1, 11))
     ),
     (
-        # Case 2: Blacklist (Exclude 1-22, leaving 23-32)
-        # Result count: 10 items
+        # Scenario 2: Blacklist Mode
+        # Block IDs 1 through 22, leaving only 23 through 32.
         {"whitelist": None, "blacklist": list(range(1, 23))}, 
         list(range(1, 33)), 
         list(range(23, 33))
     ),
     (
-        # Case 3: Allow All (Exactly 10 items at the boundary)
+        # Scenario 3: Open Gate Mode
+        # If no lists are provided, everything should be allowed to pass.
         {"whitelist": None, "blacklist": None}, 
         list(range(23, 33)), 
         list(range(23, 33))
     ),
     (
-        # Case 4: Sparse Whitelist (10 specific IDs across the 1-32 range)
+        # Scenario 4: Specific Pick-and-Choose
+        # Test if the filter can grab 10 specific IDs scattered across a range.
         {"whitelist": [2, 5, 8, 12, 15, 19, 22, 26, 29, 32], "blacklist": None},
         list(range(1, 33)),
         [2, 5, 8, 12, 15, 19, 22, 26, 29, 32]
     ),
 ], ids=[
-    "Whitelist Mode (10/32)",
-    "Blacklist Mode (10/32)",
-    "Allow All Mode (Boundary 10)",
-    "Sparse Whitelist (10 specific IDs)"
+    "Whitelist (Keep 1-10)",
+    "Blacklist (Exclude 1-22)",
+    "Allow All (No filters)",
+    "Sparse Selection (Specific IDs)"
 ])
 def test_filter_tags_logic(config, input_ids, expected_ids):
     """
-    Standard test flow: Arrange -> Act -> Assert.
-    This function runs 4 times with the different data sets defined above.
+    This test follows the 'Arrange, Act, Assert' pattern:
+    1. Set up the data. 2. Run the logic. 3. Check if the result is correct.
     """
-    # 1. Arrange: Prepare the objects and state
+    # 1. Arrange: Initialize the filter and create our fake 'tags'
     filter_list = FilterList(config)
     tags = [create_mock_tag(tag_id) for tag_id in input_ids]
     
-    # 2. Act: Trigger the behavior we are testing
+    # 2. Act: Run the list of tags through the filter logic
     results = filter_list.filter_tags(tags)
     result_ids = [tag.id for tag in results]
     
-    # 3. Assert: Verify the outcome matches our expectations
+    # 3. Assert: Check if the IDs that made it through match what we expected
     assert result_ids == expected_ids
+
+# --- Error Handling Test ---
 
 def test_filter_list_raises_error_on_both_set():
     """
-    Tests for 'Happy Paths' are good, but we also test for 'Bad Paths' (Expected Failures).
-    This ensures the code fails safely when misused.
+    Tests what happens when a user gives 'illegal' instructions.
+    The system shouldn't allow someone to use a Whitelist AND a Blacklist at the same time.
     """
+    # Setup a configuration that breaks the rules
     config = {"whitelist": [1], "blacklist": [2]}
     
-    # pytest.raises acts as a 'trap'. If the code inside the 'with' block 
-    # throws a ValueError, the test passes. If it doesn't throw, the test fails.
+    # 'pytest.raises' is a safety net. The test will only PASS if the code 
+    # correctly catches the mistake and triggers a "ValueError" message.
     with pytest.raises(ValueError, match="Whitelist and Blacklist are both set!"):
         FilterList(config)
