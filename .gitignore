@@ -4,3 +4,4 @@ networktables.json
 **/__pycache__/
 **.png
 calibration/generated_profile.json
+.pytest_cache/

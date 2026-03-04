@@ -1,12 +1,9 @@
- #!/bin/bash
-
-# This script is can only be run on the actual coprocessor itself.
+#!/bin/bash
 # This project requires Linux
 
 cd "$(dirname $0)"
 
-# Install Picamera2; nessecary for Luma P1 support.
-sudo apt install -y python3-picamera2 --no-install-recommends
+echo "WARNING: This script is supposed to only set up for pytest and not for actual usage!"
 
 # Create python virtual environment
 python3 -m venv --system-site-packages .venv
