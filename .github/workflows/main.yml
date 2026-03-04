@@ -35,15 +35,19 @@ jobs:
         ./setup_testing_env.sh
 
     - name: Run tests
-      run: ./.venv/bin/python -m pytest
-
-    - name: Run tests
       # --junitxml creates a report file
       run: ./.venv/bin/python -m pytest --junitxml=results.xml
 
     - name: Upload test results
-      if: always() # Ensures results are uploaded even if tests fail
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: pytest-results
         path: results.xml
+
+    - name: Interpret test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          results.xml
