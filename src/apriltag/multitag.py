@@ -19,7 +19,7 @@ def pose_from_vecs(rvec: cv2.typing.MatLike, tvec: cv2.typing.MatLike) -> Pose2d
     r, _ = cv2.Rodrigues(rvec)
 
     r_inv = r.T
-    t_inv = -r.T @ tvec
+    t_inv = -r_inv @ tvec
 
     # Compose results into Transform3d
     inverse_transform = Pose3d(Translation3d(t_inv), Rotation3d(r_inv))
@@ -39,8 +39,6 @@ def multi_tag_pose(
     screen_points = []
     world_points = []
 
-    tags.sort(reverse=True)
-
     for tag in tags:
         if tag.global_pose:
             for i in range(4):
@@ -54,8 +52,8 @@ def multi_tag_pose(
                 screen_points.append([tag.corners[2 * i], tag.corners[2 * i + 1]])
 
     # Convert to numpy arrays (required for OpenCV)
-    screen_points = numpy.array(screen_points)
-    world_points = numpy.array(world_points)
+    screen_points = numpy.array(screen_points, dtype=numpy.float32)
+    world_points = numpy.array(world_points, dtype=numpy.float32)
 
     # SolvePnP requires 4 points (min)
     if len(world_points) < 4:
@@ -83,10 +81,10 @@ def multi_tag_pose(
 
         if rvec is not None and tvec is not None:
             old_pose = pose_from_vecs(rvec, tvec)
-            if old_pose.translation().distance(new_pose.translation()) >= 0.5*0.5 and len(world_points) < 8:
+            if old_pose.translation().distance(new_pose.translation()) >= 0.5 and len(world_points) < 8:
                 return None, (rvec, tvec)
 
         return new_pose, (new_rvec, new_tvec)
 
     # Should only happen with extraneous tags
-    return None, (None, None)
+    return None, (rvec, tvec)

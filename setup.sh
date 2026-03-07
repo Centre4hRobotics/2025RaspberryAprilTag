@@ -28,3 +28,8 @@ $pydir -m pip install opencv-contrib-python-headless
 $pydir -m pip install matplotlib
 
 $pydir -m pip install pytest
+
+# Enable systemd service
+sudo cp rpivision.service /etc/systemd/system/
+sudo systemctl daemon-reload
+echo "Note: if this code isn't run on a photonvision device, the systemd service will need to be modified."

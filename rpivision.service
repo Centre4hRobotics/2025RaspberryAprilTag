@@ -1,0 +1,13 @@
+[Unit]
+Description="Run 4027's vision code"
+After=network.target
+StartLimitIntervalSec=5
+StartLimitBurst=15
+
+[Service]
+ExecStart=/home/photon/2025RaspberryAprilTag/run.sh
+Restart=on-failure
+RestartSec=0.1
+
+[Install]
+WantedBy=multi-user.target
