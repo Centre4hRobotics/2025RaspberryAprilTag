@@ -31,8 +31,8 @@ jobs:
 
     - name: Setup testing environment
       run: |
-        chmod +x setup_testing_env.sh
-        ./setup_testing_env.sh
+        chmod +x setup/setup_testing_env.sh
+        ./setup/setup_testing_env.sh
 
     - name: Run tests
       # --junitxml creates a report file
