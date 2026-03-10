@@ -12,8 +12,6 @@ sudo apt install -y python3-picamera2 --no-install-recommends
 python3 -m venv --system-site-packages .venv
 pydir=./.venv/bin/python
 
-echo "Created Virtual Environment. It is located at $pydir"
-
 # Install required PIP packages
 
 # Install robotpy
@@ -27,7 +25,7 @@ $pydir -m pip install opencv-contrib-python-headless
 
 $pydir -m pip install matplotlib
 
-$pydir -m pip install pytest
+echo "Created Virtual Environment. It is located at $pydir"
 
 # Enable systemd service
 sudo cp rpivision.service /etc/systemd/system/
