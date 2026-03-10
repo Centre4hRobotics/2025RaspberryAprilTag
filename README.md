@@ -1,5 +1,7 @@
 # 2025RaspberryAprilTag
 
+![Status Name](https://github.com/Centre4hRobotics/2025RaspberryAprilTag/actions/workflows/main.yml/badge.svg)
+
 This repository holds the source code for the Raspberry Pi-based AprilTag system for CC4H Robotics. Visit [learn.cc4hrobotics.org/programming/raspberry-pi](https://learn.cc4hrobotics.org/programming/raspberry-pi/) for background information and tutorials.
 
 Each different camera, meaning each camera with a different sensor or lens, should get its own profile in `config/CameraProfiles.json`.
