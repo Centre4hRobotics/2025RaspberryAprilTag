@@ -29,4 +29,4 @@ echo "Created Virtual Environment. It is located at $pydir"
 # Enable systemd service
 sudo cp setup/rpivision.service /etc/systemd/system/
 sudo systemctl daemon-reload
-echo "Note: if this code isn't run on a photonvision device, the systemd service will need to be modified."
+echo "Note: if this code isn't run on a photonvision device, the systemd service (at /etc/systemd/system/rpivision.service) will need to be modified."

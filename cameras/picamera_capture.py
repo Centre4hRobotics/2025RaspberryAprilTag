@@ -1,5 +1,9 @@
 """ Implement picamera2 camera """
 
+import os
+# Quiet picamera2
+os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
+
 import picamera2
 import cv2
 

@@ -1,5 +1,6 @@
 """ This is the main file for FRC Team 4027's 2026 AprilTag Vision. """
 
+import json
 import time
 
 import cv2
@@ -20,7 +21,6 @@ def main() -> None:
     cam = init.camera
 
     # Retained variables
-    global_pose = None
     best_tag = None
 
     # Save rvec and tvec from solvepnp calls
@@ -80,7 +80,7 @@ def main() -> None:
         # Publish everything to network tables
 
         runtime = time.time() - start_time
-        if global_pose:
+        if global_pose is not None:
             debug.add_data(runtime, global_pose.translation().y, 1)
             debug.add_data(runtime, len(tags), 2)
         else:
@@ -100,9 +100,18 @@ def main() -> None:
 
 if __name__ == "__main__":
 
-    debug.create_plot('Time', 'TTC Y (m)', 'Best Tag')
+    with open('config/Settings.json', 'r', encoding='utf-8') as file:
+        js = json.load(file)
 
-    try:
-        main()
-    except KeyboardInterrupt:
-        debug.save_plot('error.png')
+    if js['debug']:
+        debug.create_plot('Time', 'TTC Y (m)', 'Best Tag')
+
+        try:
+            main()
+        except KeyboardInterrupt:
+            debug.save_plot('error.png')
+    else:
+        try:
+            main()
+        except KeyboardInterrupt:
+            pass
