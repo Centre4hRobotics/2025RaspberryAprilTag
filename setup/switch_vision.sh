@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if systemctl is-enabled photonvision >/dev/null 2>&1; then
+if systemctl is-enabled photonvision > /dev/null 2>&1; then
 	echo "Stopping Photonvision"
 	sudo systemctl stop photonvision
 	sudo systemctl disable photonvision

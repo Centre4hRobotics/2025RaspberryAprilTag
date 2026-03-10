@@ -5,11 +5,13 @@ import time
 from pathlib import Path
 
 import cv2
+import numpy
+from cscore import CameraServer
 
-from src import settings
+from src import camera
 from cameras.picamera_capture import PiCamCapture
 
-def take_images(init: settings.Settings, camera_lock: threading.Lock):
+def take_images(cam: camera.camera_capture.CaptureBase, camera_lock: threading.Lock):
     """ Take CLI input to take photos """
     while True:
 
@@ -18,7 +20,7 @@ def take_images(init: settings.Settings, camera_lock: threading.Lock):
         print("took photo")
 
         with camera_lock:
-            image = init.camera.get_frame()
+            image = cam.get_frame()
 
         file_name = Path('calibration/0_img.png')
 
@@ -34,17 +36,20 @@ def main() -> None:
 
     camera_lock = threading.Lock()
 
-    init = settings.Settings("config/Settings.json", PiCamCapture())
+    cam = PiCamCapture()
 
-    input_thread = threading.Thread(target=take_images, args=(init, camera_lock), daemon=True)
+    input_thread = threading.Thread(target=take_images, args=(cam, camera_lock), daemon=True)
     input_thread.start()
+
+    x_size, y_size, _ = cam.get_frame().shape
+
+    output_stream = CameraServer.putVideo('Vision', x_size, y_size)
 
     while True:
         with camera_lock:
-            init.camera.update()
-            image = init.camera.get_frame()
+            image = cam.get_frame()
 
-        init.camera.output_stream.putFrame(image)
+        output_stream.putFrame(image)
 
         time.sleep(1/30)
 
