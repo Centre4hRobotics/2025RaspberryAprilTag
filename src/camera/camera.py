@@ -5,59 +5,29 @@ import dataclasses
 
 import cv2
 import numpy
-import picamera2
-from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Quaternion
 from cscore import CameraServer
 
-from src.camera import calibration
-
+from . import calibration, camera_capture
 
 @dataclasses.dataclass
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, _calibration: dict) -> None:
+    def __init__(self, camera_settings: dict, capture: camera_capture.CaptureBase) -> None:
         CameraServer.enableLogging()
 
-        with open("config/CameraProfiles.json", 'r', encoding='utf-8') as file:
+        with open('config/CameraProfiles.json', 'r', encoding='utf-8') as file:
             profiles = json.load(file)
 
-        profile = profiles[_calibration['profile']]["resolution"]
+        profile = profiles[camera_settings['profile']]['resolution']
 
-        self.output_stream = CameraServer.putVideo("Vision", profile['x'], profile['y'])
+        self.output_stream = CameraServer.putVideo('Vision', profile['x'], profile['y'])
+
+        self.capture = capture
+        self.capture.set_profile(profile)
 
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(_calibration["profile"])
-        offset = _calibration["offset"]
-
-        # Initialize actual camera portion
-        self.cam = picamera2.Picamera2()
-
-        camera_config = self.cam.create_video_configuration(
-            main={
-                'size': (profile['x'], profile['y'])
-            }
-        )
-
-        self.cam.configure(camera_config)
-        self.cam.start()
-
-        # Get the offset from JSON
-        self.offset = Transform3d(
-            Translation3d(
-                offset["position"][0],
-                offset["position"][1],
-                offset["position"][2]
-            ),
-            Rotation3d(
-                Quaternion(
-                    offset["rotation"][0],
-                    offset["rotation"][1],
-                    offset["rotation"][2],
-                    offset["rotation"][3]
-                )
-            )
-        )
+        self.calibration = calibration.CameraCalibration(camera_settings['profile'])
 
         # Initialize image
         self.mat = numpy.zeros(
@@ -75,14 +45,15 @@ class Camera:
     def update(self):
         """ Update images to latest """
 
-        self.mat = self.cam.capture_array()
-
-        # Rotate image to be top-up
-        if self.rotate_dist is not None:
-            self.mat = cv2.rotate(self.mat, self.rotate_dist)
+        self.mat = self.capture.get_frame()
 
         self.gray_mat = cv2.cvtColor(self.mat, cv2.COLOR_RGB2GRAY)
 
     def get_frame(self):
-        """ Get frame from camera (lazily) """
+        """ Get frame from camera """
         return self.gray_mat
+
+    def rotate_mat(self):
+        """ Rotate mat to be top-up (**MUST** be done **AFTER** all processing!!) """
+        if self.rotate_dist is not None:
+            self.mat = cv2.rotate(self.mat, self.rotate_dist)

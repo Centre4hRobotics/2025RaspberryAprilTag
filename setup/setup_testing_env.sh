@@ -1,15 +1,15 @@
- #!/bin/bash
-
-# This script is ARM ONLY!!! It will not work on any x86/RISC-V processor
+#!/bin/bash
 # This project requires Linux
 
-cd "$(dirname $0)"
+cd "$(dirname $0)/.."
 
-sudo apt install -y python3-picamera2 --no-install-recommends
+echo "WARNING: This script is supposed to only set up for pytest and not for actual usage!"
 
 # Create python virtual environment
-python -m venv --system-site-packages .venv
+python3 -m venv --system-site-packages .venv
 pydir=./.venv/bin/python
+
+echo "Created Virtual Environment. It is located at $pydir"
 
 # Install required PIP packages
 
@@ -20,4 +20,8 @@ $pydir -m pip install --extra-index-url=https://wpilib.jfrog.io/artifactory/api/
 $pydir -m pip install --extra-index-url=https://wpilib.jfrog.io/artifactory/api/pypi/wpilib-python-release-2026/simple robotpy-apriltag
 
 # Install opencv & other packages
-$pydir -m pip install opencv-python-headless
+$pydir -m pip install opencv-contrib-python-headless
+
+$pydir -m pip install matplotlib
+
+$pydir -m pip install pytest

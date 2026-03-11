@@ -1,59 +1,90 @@
 """ Multi-tag robot pose detection """
 
-import math
 import numpy
 import cv2
-from wpimath.geometry import Pose2d, Translation2d, Rotation2d
+from wpimath.geometry import Pose2d, Translation3d, Pose3d, Rotation3d
 
-from src.apriltag import apriltag
-from src.camera import camera
+from src import apriltag, camera
 
+HALF_TAG = .5 * 6.5 * 25.4 * 1/1000 # 1/2 of tag size=(6.5" * 25.4mm/in * 1m/1000mm * 1/2)
+corner_offsets = [
+    Translation3d(0, -HALF_TAG, -HALF_TAG), # bottom left
+    Translation3d(0, HALF_TAG, -HALF_TAG), # bottom right
+    Translation3d(0, HALF_TAG, HALF_TAG), # top right
+    Translation3d(0, -HALF_TAG, HALF_TAG) # top left
+]
 
-def multi_tag_pose(tags: list[apriltag.Apriltag], cam: camera.Camera) -> Pose2d:
-    """ Use SolvePNP to find the robot's pose. """
+def pose_from_vecs(rvec: cv2.typing.MatLike, tvec: cv2.typing.MatLike) -> Pose2d:
+    """ Calculate pose from rvec and tvec given by SolvePnP """
+    r, _ = cv2.Rodrigues(rvec)
 
-    # World Points (corners of tags)
-    world_points = numpy.array([
-        t.global_pose.translation().toVector()
-        for t in tags if t.global_pose
-    ])
+    r_inv = r.T
+    t_inv = -r_inv @ tvec
 
-    # Screen points (corners of tags)
-    screen_points = numpy.array([
-        [t.detection.getCenter().x, t.detection.getCenter().y]
-        for t in tags if t.global_pose
-    ])
+    # Compose results into Transform3d
+    inverse_transform = Pose3d(Translation3d(t_inv), Rotation3d(r_inv))
 
-    if len(world_points) < 3:
-        return Pose2d()
+    return inverse_transform.toPose2d()
 
-    # Distortions
+def multi_tag_pose(
+        tags: list[apriltag.Apriltag],
+        cam: camera.Camera,
+        rvec: cv2.typing.MatLike | None = None,
+        tvec: cv2.typing.MatLike | None = None
+    ) -> tuple[Pose2d | None, tuple[cv2.typing.MatLike | None, cv2.typing.MatLike | None]]:
+
+    """ Use SolvePNP to find the camera's global pose. """
+
+    # Get all corners
+    screen_points = []
+    world_points = []
+
+    for tag in tags:
+        if tag.global_pose:
+            for i in range(4):
+                world_points.append(
+                    #CoordinateSystem.convert(
+                        (corner_offsets[i].rotateBy(tag.global_pose.rotation()) + tag.global_pose.translation())
+                    #    CoordinateSystem.NWU(), # From
+                    #    CoordinateSystem.EDN()  # To
+                    .toVector()
+                )
+                screen_points.append([tag.corners[2 * i], tag.corners[2 * i + 1]])
+
+    # Convert to numpy arrays (required for OpenCV)
+    screen_points = numpy.array(screen_points, dtype=numpy.float32)
+    world_points = numpy.array(world_points, dtype=numpy.float32)
+
+    # SolvePnP requires 4 points (min)
+    if len(world_points) < 4:
+        return None, (rvec, tvec)
+
+    # Convert camera constants to usable format
     distortion = numpy.array(cam.calibration.camera_distortion)
-
-    # Intrinsics
     intrinsics = numpy.array(cam.calibration.camera_intrinsics)
 
-    success, rvec, tvec = cv2.solvePnP(world_points, screen_points, intrinsics, distortion)
-
-    cam_offset_robot = cam.offset.translation().toVector()
+    # SolvePnP call (duh)
+    success, new_rvec, new_tvec = cv2.solvePnP(
+        world_points,
+        screen_points,
+        intrinsics,
+        distortion,
+        rvec=rvec,
+        tvec=tvec,
+        useExtrinsicGuess=(rvec is not None and tvec is not None),
+        flags=cv2.SOLVEPNP_ITERATIVE
+    )
 
     if success:
-        rotation_matrix, _ = cv2.Rodrigues(rvec)
 
-        cam_pos_world = -rotation_matrix.T @ tvec
+        new_pose = pose_from_vecs(new_rvec, new_tvec)
 
-        cam_rot_world = rotation_matrix.T
+        if rvec is not None and tvec is not None:
+            old_pose = pose_from_vecs(rvec, tvec)
+            if old_pose.translation().distance(new_pose.translation()) >= 0.5 and len(world_points) < 8:
+                return None, (rvec, tvec)
 
-        cam_yaw_world = math.atan2(cam_rot_world[1, 0], cam_rot_world[0, 0])
+        return new_pose, (new_rvec, new_tvec)
 
-        cam_offset_world = rotation_matrix.T @ cam_offset_robot
-
-        robot_pos_world = cam_pos_world - cam_offset_world
-
-        robot_yaw = cam_yaw_world - cam.offset.rotation().angle
-
-        x, y, _ = robot_pos_world.reshape(3)
-
-        return Pose2d(Translation2d(float(x), float(y)), Rotation2d(robot_yaw))
-
-    return Pose2d()
+    # Should only happen with extraneous tags
+    return None, (rvec, tvec)
