@@ -5,7 +5,6 @@ import time
 from pathlib import Path
 
 import cv2
-import numpy
 from cscore import CameraServer
 
 from src import camera

@@ -1,13 +1,13 @@
 """ Implement picamera2 camera """
 
 import os
-# Quiet picamera2
-os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
 import picamera2
 import cv2
 
 from src.camera.camera_capture import CaptureBase
+# Quiet picamera2's logging
+os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
 class PiCamCapture(CaptureBase):
     """ Implement Picamera2 for camera captures (required for Luma P1) """

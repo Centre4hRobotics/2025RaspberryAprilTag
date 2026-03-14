@@ -10,15 +10,15 @@ from src import apriltag, settings, debug
 
 from cameras.picamera_capture import PiCamCapture
 
-
 def main() -> None:
     """ Main loop """
 
     # Initialize code
-    init = settings.Settings("config/Settings.json", PiCamCapture())
+    init = settings.Settings("config/Settings.json", [PiCamCapture()])
     print("initialized tables & stuff")
     # easier calling
-    cam = init.camera
+    cam = init.cameras[0]
+    estimator = init.estimators[0]
 
     # Retained variables
     best_tag = None
@@ -35,7 +35,7 @@ def main() -> None:
         # Update camera frame
         cam.update()
 
-        detections = init.estimator.detector.detect(cam.get_frame()) # type: ignore
+        detections = estimator.detector.detect(cam.get_frame()) # type: ignore
 
         tags = [apriltag.Apriltag(detection, init.field) for detection in detections]
 
@@ -61,7 +61,7 @@ def main() -> None:
 
                 tag.undistort_corners(cam.calibration)
 
-                tag.calculate_pose(init.estimator)
+                tag.calculate_pose(estimator)
 
         # Crosshair
         cv2.line(
