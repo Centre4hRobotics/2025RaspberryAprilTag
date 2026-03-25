@@ -5,8 +5,9 @@ import os
 import picamera2
 import cv2
 
-from src.camera.camera_capture import CaptureBase
-# Quiet picamera2's logging
+from src.camera.capture import CaptureBase
+
+# Quiet picamera2's logging to errors only
 os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
 class PiCamCapture(CaptureBase):
@@ -17,7 +18,7 @@ class PiCamCapture(CaptureBase):
     def set_profile(self, profile: dict) -> None:
         camera_config = self.capture.create_video_configuration(
             main={
-                'size': (profile['x'], profile['y'])
+                'size': (profile['resolution']['x'], profile['resolution']['y'])
             }
         )
 

@@ -1,41 +1,37 @@
 """ Represent and initialize cameras """
 
-import json
 import dataclasses
 
 import cv2
 import numpy
 from cscore import CameraServer
 
-from . import calibration, camera_capture
+from . import capture, settings
 
 @dataclasses.dataclass
 class Camera:
     """ Wrap cameras """
 
-    def __init__(self, camera_settings: dict, capture: camera_capture.CaptureBase) -> None:
+    def __init__(self, camera_settings: settings.CameraSettings, capture_: capture.CaptureBase) -> None:
         CameraServer.enableLogging()
 
-        with open('config/CameraProfiles.json', 'r', encoding='utf-8') as file:
-            profiles = json.load(file)
+        self.calibration = camera_settings.calibration
 
-        profile = profiles[camera_settings['profile']]['resolution']
+        self.output_stream = CameraServer.putVideo('Vision', camera_settings.x_res, camera_settings.y_res)
 
-        self.output_stream = CameraServer.putVideo('Vision', profile['x'], profile['y'])
-
-        self.capture = capture
-        self.capture.set_profile(profile)
+        self.capture = capture_
+        self.capture.set_profile(camera_settings.profile)
 
         # Get values from JSON
-        self.calibration = calibration.CameraCalibration(camera_settings['profile'])
+
 
         # Initialize image
         self.mat = numpy.zeros(
-            shape=(self.calibration.x_res, self.calibration.y_res, 3),
+            shape=(camera_settings.x_res, camera_settings.y_res, 3),
             dtype=numpy.uint8
         )
         self.gray_mat = numpy.zeros(
-            shape=(self.calibration.x_res, self.calibration.y_res),
+            shape=(camera_settings.x_res, camera_settings.y_res),
             dtype=numpy.uint8
         )
 

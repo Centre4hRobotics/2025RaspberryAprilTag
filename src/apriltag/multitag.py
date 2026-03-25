@@ -2,7 +2,7 @@
 
 import numpy
 import cv2
-from wpimath.geometry import Pose2d, Translation3d, Pose3d, Rotation3d
+from wpimath.geometry import Pose2d, Translation3d, Pose3d, Rotation3d, CoordinateSystem
 
 from src import apriltag, camera
 
@@ -24,6 +24,8 @@ def pose_from_vecs(rvec: cv2.typing.MatLike, tvec: cv2.typing.MatLike) -> Pose2d
     # Compose results into Transform3d
     inverse_transform = Pose3d(Translation3d(t_inv), Rotation3d(r_inv))
 
+    inverse_transform = CoordinateSystem.convert(inverse_transform, CoordinateSystem.EDN(), CoordinateSystem.NWU())
+
     return inverse_transform.toPose2d()
 
 def multi_tag_pose(
@@ -43,11 +45,11 @@ def multi_tag_pose(
         if tag.global_pose:
             for i in range(4):
                 world_points.append(
-                    #CoordinateSystem.convert(
-                        (corner_offsets[i].rotateBy(tag.global_pose.rotation()) + tag.global_pose.translation())
-                    #    CoordinateSystem.NWU(), # From
-                    #    CoordinateSystem.EDN()  # To
-                    .toVector()
+                    CoordinateSystem.convert(
+                        (corner_offsets[i].rotateBy(tag.global_pose.rotation()) + tag.global_pose.translation()),
+                        CoordinateSystem.NWU(), # From
+                        CoordinateSystem.EDN()  # To
+                    ).toVector()
                 )
                 screen_points.append([tag.corners[2 * i], tag.corners[2 * i + 1]])
 
@@ -69,8 +71,8 @@ def multi_tag_pose(
         screen_points,
         intrinsics,
         distortion,
-        rvec=rvec,
-        tvec=tvec,
+        rvec=rvec.copy() if rvec is not None else None,
+        tvec=tvec.copy() if tvec is not None else None,
         useExtrinsicGuess=(rvec is not None and tvec is not None),
         flags=cv2.SOLVEPNP_ITERATIVE
     )

@@ -2,7 +2,7 @@
 
 import cv2
 
-from src.camera.camera_capture import CaptureBase
+from src.camera.capture import CaptureBase
 
 class OpenCVCapture(CaptureBase):
     """ Define a base class for camera captures """
@@ -15,8 +15,8 @@ class OpenCVCapture(CaptureBase):
 
     def set_profile(self, profile: dict) -> None:
         """ Set camera profile """
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, profile['x'])
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, profile['y'])
+        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, profile['resolution']['x'])
+        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, profile['resolution']['y'])
 
     def get_frame(self) -> cv2.typing.MatLike:
         """ Get frame from camera """

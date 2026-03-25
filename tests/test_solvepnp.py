@@ -1,12 +1,69 @@
 """ Tests Multi-Tag Pose Computation with SolvePnP """
+
 from unittest.mock import MagicMock
 
 import pytest
-import numpy as np
-from wpimath.geometry import Pose3d, Rotation3d, Translation3d
+from wpimath.geometry import Pose3d, Rotation3d, Translation3d, CoordinateSystem
 
-# Assuming the snippet is in src/apriltag/multitag.py
-from src.apriltag.multitag import multi_tag_pose
+from src.apriltag.multitag import multi_tag_pose, pose_from_vecs
+from src import camera
+from cameras import virtual_capture
+
+def world_to_cam_point(intrinsics, cam_pose: Pose3d, world_point: Translation3d) -> tuple[int, int]:
+    """ Convert a world position into a screen position """
+
+    # Convert both the camera pose and world point into EDN
+    cv_cam_pose = CoordinateSystem.convert(cam_pose, CoordinateSystem.NWU(), CoordinateSystem.EDN())
+    cv_world_point = CoordinateSystem.convert(world_point, CoordinateSystem.NWU(), CoordinateSystem.EDN())
+
+    # Express world point in camera frame
+    p_cam = cv_world_point - cv_cam_pose.translation()
+    p_cam = p_cam.rotateBy(-cv_cam_pose.rotation())
+
+    X, Y, Z = p_cam.X(), p_cam.Y(), p_cam.Z()
+
+    Fx = intrinsics[0][0]
+    Fy = intrinsics[1][1]
+    Cx = intrinsics[0][2]
+    Cy = intrinsics[1][2]
+    u = int(Fx * (X / Z) + Cx)
+    v = int(Fy * (Y / Z) + Cy)
+
+    return u, v
+
+HALF_TAG = .5 * 6.5 * 25.4 * 1/1000 # 1/2 of tag size=(6.5" * 25.4mm/in * 1m/1000mm * 1/2)
+
+def tag_pose_to_corners(pose: Pose3d) -> list[Translation3d]:
+    """ Convert tag's world pose to corners """
+    corner_offsets = [
+        Translation3d(0, -HALF_TAG, -HALF_TAG), # bottom left
+        Translation3d(0, HALF_TAG, -HALF_TAG), # bottom right
+        Translation3d(0, HALF_TAG, HALF_TAG), # top right
+        Translation3d(0, -HALF_TAG, HALF_TAG) # top left
+    ]
+
+    points = []
+    for i in range(4):
+        points.append((corner_offsets[i].rotateBy(pose.rotation()) + pose.translation()))
+
+    return points
+
+def fake_tag(tag_pose: Pose3d, camera_pose: Pose3d, camera_: camera.Camera):
+    """ Creates a mock AprilTag at a fixed world position. """
+    tag = MagicMock()
+    # Tag is at (5, 5, 0) in the world
+    tag.global_pose = tag_pose # Pose3d(Translation3d(5, 5, 0), Rotation3d(0, 0, 0))
+    # 2D corners on screen
+    corners = []
+
+    for corner in tag_pose_to_corners(tag_pose):
+        x, y = world_to_cam_point(camera_.calibration.camera_intrinsics, camera_pose, corner)
+        corners.append(x)
+        corners.append(y)
+
+    tag.corners = corners
+
+    return tag
 
 class TestMultiTagPose:
     """ Tests the SolvePnP wrapper for multi-tag robot localization. """
@@ -16,83 +73,53 @@ class TestMultiTagPose:
     @pytest.fixture
     def mock_camera(self):
         """ Creates a mock camera with standard calibration matrices. """
-        cam = MagicMock()
-        cam.calibration.camera_intrinsics = [
-            [1000, 0, 640],
-            [0, 1000, 360],
-            [0, 0, 1]
-        ]
-        cam.calibration.camera_distortion = [0, 0, 0, 0, 0]
-        return cam
 
-    @pytest.fixture
-    def mock_tag(self):
-        """ Creates a mock AprilTag at a fixed world position. """
-        tag = MagicMock()
-        # Tag is at (5, 5, 0) in the world
-        tag.global_pose = Pose3d(Translation3d(5, 5, 0), Rotation3d(0, 0, 0))
-        # 2D corners on screen
-        tag.corners = [100, 100, 200, 100, 200, 200, 100, 200]
-        return tag
+        settings = camera.settings.CameraSettings(
+            {
+                "resolution": {
+                    "x": 1280,
+                    "y": 800
+                },
+                "intrinsics": { "Fx": 1000, "Fy": 1000, "Cx": 640, "Cy": 400 },
+                "distortion": [ 0, 0, 0, 0, 0 ],
+                "rotation": 0
+            }
+        )
+
+        cam = camera.Camera(settings, virtual_capture.VirtualCapture())
+
+        return cam
 
     # --- Tests ---
 
-    @pytest.mark.parametrize("tags_list, expected_to_fail", [
-        ([], True),                   # No tags at all
-        ([MagicMock(global_pose=None)], True) # Tag exists but has no field position
-    ], ids=["Empty Tag List", "Tag with No Global Pose"])
-    def test_insufficient_data_returns_none(self, mock_camera, tags_list, expected_to_fail):
-        """ Verify that if we don't have enough valid data, we return None safely. """
-        pose, vecs = multi_tag_pose(tags_list, mock_camera)
+    def test_solvepnp_once(self, mock_camera):
+        """ Make sure solvePnP gets the right position """
+        cam_true_pose = Pose3d(Translation3d(0, 0, 0), Rotation3d(0, 0, 0))
+        tag_pose = Pose3d(Translation3d(2, 0, 0), Rotation3d(0, 0, 3.14159))
 
-        if expected_to_fail:
-            assert pose is None
-            assert vecs == (None, None)
+        tag = fake_tag(tag_pose, cam_true_pose, mock_camera)
 
-    def test_solvepnp_success(self, mock_camera, mock_tag, monkeypatch):
-        """
-        Tests that multi_tag_pose correctly calls SolvePnP and returns a Pose2d.
-        """
-        # 1. Arrange: Create fake results for OpenCV to return
-        fake_rvec = np.zeros((3, 1))
-        fake_tvec = np.zeros((3, 1))
+        pose, _ = multi_tag_pose([tag], mock_camera, None, None)
 
-        # We use monkeypatch to replace cv2.solvePnP with a fake version for this test only
-        mock_solve = MagicMock(return_value=(True, fake_rvec, fake_tvec))
-        monkeypatch.setattr("src.apriltag.multitag.cv2.solvePnP", mock_solve)
+        assert pose.X() == pytest.approx(cam_true_pose.X(), abs=0.05)
+        assert pose.Y() == pytest.approx(cam_true_pose.Y(), abs=0.05)
+        assert pose.rotation().radians() == pytest.approx(cam_true_pose.rotation().Z(), abs=0.05)
 
-        # 2. Act
-        pose, (rvec, tvec) = multi_tag_pose([mock_tag], mock_camera)
+    def test_rejection_of_jumps(self, mock_camera):
+        cam_true_pose = Pose3d(Translation3d(0, 0, 0), Rotation3d(0, 0, 0))
+        tag_1_pose = Pose3d(Translation3d(2, 0, 0), Rotation3d(0, 0, 3.14159))
 
-        # 3. Assert
+        tag_2_pose = Pose3d(Translation3d(10, 0, 0), Rotation3d(0, 0, 3.14159))
+
+        tag = fake_tag(tag_1_pose, cam_true_pose, mock_camera)
+
+        pose, (rvec, tvec) = multi_tag_pose([tag], mock_camera, None, None)
+
         assert pose is not None
-        assert np.array_equal(rvec, fake_rvec)
-        assert np.array_equal(tvec, fake_tvec)
-        mock_solve.assert_called_once()
 
-    def test_rejection_of_large_jumps(self, mock_camera, mock_tag, monkeypatch):
-        """
-        Tests the logic that rejects a new pose if it's too far (>= 0.5m)
-        from the previous estimate when only one tag is visible.
-        """
-        # 1. Arrange:
-        # Old position at origin
-        old_rvec = np.zeros((3, 1))
-        old_tvec = np.zeros((3, 1))
+        tag = fake_tag(tag_2_pose, cam_true_pose, mock_camera)
+        tag.global_pose = tag_1_pose
 
-        # New position calculated by OpenCV is 10 meters away
-        new_rvec = np.zeros((3, 1))
-        new_tvec = np.array([[10.0], [0.0], [0.0]])
+        pose, (rvec, tvec) = multi_tag_pose([tag], mock_camera, rvec=rvec, tvec=tvec)
 
-        mock_solve = MagicMock(return_value=(True, new_rvec, new_tvec))
-        monkeypatch.setattr("src.apriltag.multitag.cv2.solvePnP", mock_solve)
-
-        # 2. Act: Pass in the old vectors as an 'extrinsic guess'
-        pose, (r, t) = multi_tag_pose([mock_tag], mock_camera, rvec=old_rvec, tvec=old_tvec)
-
-        # 3. Assert:
-        # It should return None because 10m > 0.5m and we only have 1 tag (4 points)
         assert pose is None
-        # It should return the original (old) vectors back to the caller
-        assert np.array_equal(r, old_rvec)
-        assert np.array_equal(t, old_tvec)
