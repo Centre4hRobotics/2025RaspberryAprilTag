@@ -1,11 +1,12 @@
 """ Tests for individual AprilTag detection and coordinate system math. """
+from unittest.mock import MagicMock
+
 import pytest
 import numpy as np
-from unittest.mock import MagicMock
 from wpimath.geometry import Pose3d, Rotation3d, Transform3d, Translation3d
 import robotpy_apriltag
 
-from src.apriltag.apriltag import Apriltag
+from src import apriltag
 
 class TestApriltag:
     """ Groups unit tests for individual AprilTag detection and coordinate math. """
@@ -13,25 +14,8 @@ class TestApriltag:
     # --- Fixtures ---
 
     @pytest.fixture
-    def mock_calibration(self):
-        """ Creates a fake camera setup with a standard resolution (1280x720) 
-            and no lens distortion to make testing math easier. """
-        calib = MagicMock()
-        calib.x_res = 1280
-        calib.y_res = 720
-        # The 'intrinsics' matrix tells the code how to turn 3D points into 2D pixels
-        calib.camera_intrinsics = np.array([
-            [600, 0, 640],
-            [0, 600, 360],
-            [0, 0, 1]
-        ], dtype=np.float32)
-        # Distortion is set to zero so the image isn't 'warped' in these tests
-        calib.camera_distortion = np.zeros(5, dtype=np.float32)
-        return calib
-
-    @pytest.fixture
     def mock_field(self):
-        """ Creates a fake 'map' of the field where an AprilTag is sitting 
+        """ Creates a fake 'map' of the field where an AprilTag is sitting
             exactly at the center (0,0,0). """
         field = MagicMock(spec=robotpy_apriltag.AprilTagFieldLayout)
         field.getTagPose.return_value = Pose3d(Translation3d(0, 0, 0), Rotation3d())
@@ -50,66 +34,70 @@ class TestApriltag:
         ids=["Perfectly Centered", "Far Left Edge", "Far Right Edge", "Quarter Right"]
     )
     def test_x_dist_calculation(self, center_x, expected_dist):
-        """ Checks if the code correctly calculates how far left or right a tag 
+        """ Checks if the code correctly calculates how far left or right a tag
             is on the screen, ranging from -1.0 (left) to 1.0 (right). """
         detection = MagicMock()
         detection.getCenter.return_value = MagicMock(x=center_x)
-        
+
         # We don't need a real field layout for this specific math check
-        tag = Apriltag(detection, MagicMock())
-        
+        tag = apriltag.Apriltag(detection, MagicMock())
+
         assert tag.x_dist(1280) == pytest.approx(expected_dist)
 
     @pytest.mark.parametrize(
-        "raw_corners",
+        "tag_pose",
         [
-            ((300, 300, 400, 300, 400, 400, 300, 400)),
-            ((640, 360, 740, 360, 740, 460, 640, 460))
+            (Pose3d(Translation3d(1, 0, 0), Rotation3d())),
+            (Pose3d(Translation3d(1, 0, 0), Rotation3d(0, 0, 0.75)))
         ],
         ids=["Standard Square", "Centered Square"]
     )
-    def test_undistort_logic_integrity(self, raw_corners, mock_field, mock_calibration):
-        """ Verifies that if our camera has 'perfect' lenses (zero distortion), 
+    def test_undistort_logic_integrity(self, mock_tag, mock_camera, tag_pose):
+        """ Verifies that if our camera has 'perfect' lenses (zero distortion),
             the code doesn't accidentally move or warp the tag's corners. """
-        detection = MagicMock()
-        detection.getCorners.return_value = raw_corners
-        detection.getId.return_value = 1
-        
-        tag = Apriltag(detection, mock_field)
-        tag.undistort_corners(mock_calibration)
-        
+
+        tag = mock_tag(tag_pose, Pose3d())
+        tag.undistort_corners(mock_camera.calibration)
+
         # Since distortion is 0, the 'cleaned up' corners should match the original ones
         for i in range(8):
-            assert tag.undistorted_corners[i] == pytest.approx(raw_corners[i], abs=1e-3)
+            assert tag.undistorted_corners[i] == pytest.approx(tag.corners[i], abs=1e-3)
 
-    def test_coordinate_system_conversion_logic(self, mock_field):
+    @pytest.mark.parametrize(
+        "camera_pose",
+        [
+            (Pose3d(Translation3d(1, 0, 0), Rotation3d(0, 0, 3.14)))
+        ]
+    )
+    def test_coordinate_system_conversion_logic(self, mock_tag, mock_camera, camera_pose):
         """
         Tests the logic that converts raw camera data into a 3D position.
-        
+
         It handles three steps:
         1. OpenCV View: (X=Right, Y=Down, Z=Forward)
         2. Robot View:  (X=Forward, Y=Left, Z=Up)
         3. The 'Inverse': Flips the perspective from 'Where is the tag?' to 'Where is the camera?'
         """
         # 1. Simulate a tag that is exactly 1 meter directly in front of the camera
-        mock_estimator = MagicMock()
-        # EDN = (X: Right, Y: Down, Z: Forward)
-        edn_pose = Transform3d(Translation3d(0, 0, 1), Rotation3d())
-        mock_estimator.pose_estimator.estimate.return_value = edn_pose
-        
-        detection = MagicMock()
-        detection.getHomography.return_value = np.eye(3)
-        detection.getCorners.return_value = (0, 0, 0, 0, 0, 0, 0, 0)
-        detection.getId.return_value = 1
-        
-        tag = Apriltag(detection, mock_field)
-        
+        estimator = apriltag.apriltag_estimator.ApriltagEstimator(mock_camera.calibration)
+
+        tag = mock_tag(Pose3d(), camera_pose)
+
         # 2. Run the math to convert the coordinates
-        result_transform = tag.calculate_pose(mock_estimator)
-        
+        result_transform = tag.calculate_pose(estimator)
+
         # 3. Validation:
-        # If the tag was 1 meter in front of the camera, then from the tag's 
+        # If the tag was 1 meter in front of the camera, then from the tag's
         # perspective, the camera is 1 meter away on the X-axis (Forward).
-        assert result_transform.translation().x == pytest.approx(1.0)
-        assert result_transform.translation().y == pytest.approx(0.0)
-        assert result_transform.translation().z == pytest.approx(0.0)
+        assert result_transform.X() == pytest.approx(camera_pose.X(), abs=0.01)
+        assert result_transform.Y() == pytest.approx(camera_pose.Y(), abs=0.01)
+        assert result_transform.Z() == pytest.approx(camera_pose.Z(), abs=0.01)
+
+    @pytest.mark.parametrize(
+        "tag_pose",
+        [
+            (Pose3d(Translation3d(1, 0, 0), Rotation3d()),)
+        ]
+    )
+    def test_ttc(self, mock_camera, mock_tag, tag_pose):
+        """ Test if tag-to-camera transforms work properly """

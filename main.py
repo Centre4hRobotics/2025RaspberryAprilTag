@@ -17,8 +17,8 @@ def main() -> None:
     init = settings.Settings("config/Settings.json", [PiCamCapture()])
     print("initialized tables & stuff")
     # easier calling
-    cam = init.cameras[0]
-    estimator = init.estimators[0]
+    cam = init.camera
+    estimator = init.estimator
 
     # Retained variables
     best_tag = None

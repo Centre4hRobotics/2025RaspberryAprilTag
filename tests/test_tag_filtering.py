@@ -8,35 +8,38 @@ class TestFilterList:
 
     # --- Helper Method ---
 
-    def create_mock_tag(self, tag_id):
-        """ 
-        Creates a 'stunt double' for a Tag. 
-        Instead of building a real, complex Tag object, we use MagicMock 
+    @pytest.fixture
+    def mock_tag_id(self):
+        """
+        Creates a 'stunt double' for a Tag.
+        Instead of building a real, complex Tag object, we use MagicMock
         to create a simple object that just has an 'id' number.
         """
-        tag = MagicMock()
-        tag.id = tag_id
-        return tag
+        def _make(tag_id: int):
+            tag = MagicMock()
+            tag.id = tag_id
+            return tag
+        return _make
 
     # --- Multi-Scenario Testing ---
 
     @pytest.mark.parametrize("config, input_ids, expected_ids", [
         (
             # Scenario 1: Whitelist Mode
-            {"whitelist": list(range(1, 11)), "blacklist": None}, 
-            list(range(1, 33)), 
+            {"whitelist": list(range(1, 11)), "blacklist": None},
+            list(range(1, 33)),
             list(range(1, 11))
         ),
         (
             # Scenario 2: Blacklist Mode
-            {"whitelist": None, "blacklist": list(range(1, 23))}, 
-            list(range(1, 33)), 
+            {"whitelist": None, "blacklist": list(range(1, 23))},
+            list(range(1, 33)),
             list(range(23, 33))
         ),
         (
             # Scenario 3: Open Gate Mode
-            {"whitelist": None, "blacklist": None}, 
-            list(range(23, 33)), 
+            {"whitelist": None, "blacklist": None},
+            list(range(23, 33)),
             list(range(23, 33))
         ),
         (
@@ -51,19 +54,19 @@ class TestFilterList:
         "Allow All (No filters)",
         "Sparse Selection (Specific IDs)"
     ])
-    def test_filter_tags_logic(self, config, input_ids, expected_ids):
+    def test_filter_tags_logic(self, mock_tag_id, config, input_ids, expected_ids):
         """
         This test follows the 'Arrange, Act, Assert' pattern:
         1. Set up the data. 2. Run the logic. 3. Check if the result is correct.
         """
         # 1. Arrange: Initialize the filter and create our fake 'tags'
         filter_list = FilterList(config)
-        tags = [self.create_mock_tag(tag_id) for tag_id in input_ids]
-        
+        tags = [mock_tag_id(tag_id) for tag_id in input_ids]
+
         # 2. Act: Run the list of tags through the filter logic
         results = filter_list.filter_tags(tags)
         result_ids = [tag.id for tag in results]
-        
+
         # 3. Assert: Check if the IDs that made it through match what we expected
         assert result_ids == expected_ids
 
@@ -76,8 +79,8 @@ class TestFilterList:
         """
         # Setup a configuration that breaks the rules
         config = {"whitelist": [1], "blacklist": [2]}
-        
-        # 'pytest.raises' is a safety net. The test will only PASS if the code 
+
+        # 'pytest.raises' is a safety net. The test will only PASS if the code
         # correctly catches the mistake and triggers a "ValueError" message.
         with pytest.raises(ValueError, match="Whitelist and Blacklist are both set!"):
             FilterList(config)

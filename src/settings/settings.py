@@ -13,7 +13,7 @@ from .filter import FilterList
 class Settings:
     """ Store the settings generated in main.init() """
 
-    def __init__(self, config: str, camera_types: list[camera.capture.CaptureBase]):
+    def __init__(self, config: str, camera_type: camera.capture.CaptureBase):
 
         with open(config, encoding="utf-8") as file:
             settings_json = json.load(file)
@@ -28,10 +28,10 @@ class Settings:
         camera_data = settings_json["camera"]
 
         # Note: This may or may not work, I'm just guessing how cameras are assigned
-        self.cameras = [camera.Camera(camera_data, camera_type) for camera_type in camera_types]
+        self.camera = camera.Camera(camera_data, camera_type)
 
         # Create the PoseEstimator & adjust its settings
-        self.estimators = [apriltag.apriltag_estimator.ApriltagEstimator(camera.calibration) for camera in self.cameras]
+        self.estimator = apriltag.apriltag_estimator.ApriltagEstimator(self.camera.calibration)
 
         # Creating the network tables
         self.tables = network_tables.NetworkTable(is_table_host, team_number)
