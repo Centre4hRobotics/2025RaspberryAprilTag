@@ -1,12 +1,11 @@
 """ This is the main file for FRC Team 4027's 2026 AprilTag Vision. """
 
-import json
 import time
 
 import cv2
 import numpy
 
-from src import apriltag, settings, debug
+from src import apriltag, settings
 
 from cameras.picamera_capture import PiCamCapture
 
@@ -14,7 +13,7 @@ def main() -> None:
     """ Main loop """
 
     # Initialize code
-    init = settings.Settings("config/Settings.json", [PiCamCapture()])
+    init = settings.Settings("config/Settings.json", PiCamCapture())
     print("initialized tables & stuff")
     # easier calling
     cam = init.camera
@@ -79,13 +78,13 @@ def main() -> None:
 
         # Publish everything to network tables
 
-        runtime = time.time() - start_time
-        if global_pose is not None:
-            debug.add_data(runtime, global_pose.translation().y, 1)
-            debug.add_data(runtime, len(tags), 2)
-        else:
-            debug.add_data(runtime, numpy.nan, 1)
-            debug.add_data(runtime, numpy.nan, 2)
+        #runtime = time.time() - start_time
+        #if global_pose is not None:
+        #    debug.add_data(runtime, global_pose.translation().y, 1)
+        #    debug.add_data(runtime, len(tags), 2)
+        #else:
+        #    debug.add_data(runtime, numpy.nan, 1)
+        #    debug.add_data(runtime, numpy.nan, 2)
 
         cam.rotate_mat()
         cam.output_stream.putFrame(cam.mat)
@@ -99,19 +98,7 @@ def main() -> None:
         )
 
 if __name__ == "__main__":
-
-    with open('config/Settings.json', 'r', encoding='utf-8') as file:
-        js = json.load(file)
-
-    if js['debug']:
-        debug.create_plot('Time', 'TTC Y (m)', 'Best Tag')
-
-        try:
-            main()
-        except KeyboardInterrupt:
-            debug.save_plot('error.png')
-    else:
-        try:
-            main()
-        except KeyboardInterrupt:
-            pass
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
