@@ -9,7 +9,6 @@ echo "WARNING: This script is supposed to only set up for pytest and not for act
 python3 -m venv --system-site-packages .venv
 pydir=./.venv/bin/python
 
-echo "Created Virtual Environment. It is located at $pydir"
 
 # Install required PIP packages
 
@@ -21,7 +20,9 @@ $pydir -m pip install --extra-index-url=https://wpilib.jfrog.io/artifactory/api/
 
 # Install opencv & other packages
 $pydir -m pip install opencv-contrib-python-headless
-
 $pydir -m pip install matplotlib
 
+# Install pytest
 $pydir -m pip install pytest
+
+echo "Created Virtual Environment. It is located at $pydir"

@@ -3,9 +3,9 @@
 import cv2
 import numpy
 
-from src.camera import camera_capture
+from src.camera.capture import CaptureBase
 
-class VirtualCapture(camera_capture.CaptureBase):
+class VirtualCapture(CaptureBase):
     """ Read images from files """
     current_file: str = ''
 
@@ -13,7 +13,7 @@ class VirtualCapture(camera_capture.CaptureBase):
         self.size: tuple[int, int] = (0, 0)
 
     def set_profile(self, profile: dict) -> None:
-        self.size = (int(profile['x']), int(profile['y']))
+        self.size = (int(profile['resolution']['x']), int(profile['resolution']['y']))
 
     def get_frame(self) -> cv2.typing.MatLike:
         image = cv2.imread(VirtualCapture.current_file)

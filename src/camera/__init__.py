@@ -1,5 +1,6 @@
 """ All camera stuff """
 
 from . import calibration
-from . import camera_capture
+from . import capture
+from .settings import CameraSettings
 from .camera import Camera

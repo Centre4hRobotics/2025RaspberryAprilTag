@@ -1,6 +1,5 @@
 """ Represent cameras! """
 
-import json
 import dataclasses
 import numpy
 import cv2
@@ -9,11 +8,7 @@ import cv2
 class CameraCalibration:
     # I see the pylint warning, but these are all so closely related that they should still be here.
     """ Store camera calibration data """
-    def __init__(self, profile):
-        with open('config/CameraProfiles.json', encoding="utf-8") as file:
-            calibration_data = json.load(file)
-
-        camera_data = calibration_data[profile]
+    def __init__(self, camera_data: dict):
 
         fx = camera_data['intrinsics']['Fx']
         fy = camera_data['intrinsics']['Fy']
@@ -32,13 +27,13 @@ class CameraCalibration:
         self.camera_intrinsics[1][2] = cy
 
         match camera_data["rotation"]:
-            case "90":
+            case 90:
                 self.rotation = cv2.ROTATE_90_CLOCKWISE
-            case "180":
+            case 180:
                 self.rotation = cv2.ROTATE_180
-            case "270":
+            case 270:
                 self.rotation = cv2.ROTATE_90_COUNTERCLOCKWISE
-            case "-90":
+            case -90:
                 self.rotation = cv2.ROTATE_90_COUNTERCLOCKWISE
-            case "0":
+            case 0:
                 self.rotation = None

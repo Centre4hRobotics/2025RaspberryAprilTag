@@ -13,7 +13,7 @@ from .filter import FilterList
 class Settings:
     """ Store the settings generated in main.init() """
 
-    def __init__(self, config: str, camera_type: camera.camera_capture.CaptureBase):
+    def __init__(self, config: str, camera_type: camera.capture.CaptureBase):
 
         with open(config, encoding="utf-8") as file:
             settings_json = json.load(file)
