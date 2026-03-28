@@ -28,7 +28,7 @@ class Settings:
         camera_data = settings_json["camera"]
 
         # Note: This may or may not work, I'm just guessing how cameras are assigned
-        self.camera = camera.Camera(camera_data, camera_type)
+        self.camera = camera.Camera(camera.CameraSettings(camera_data), camera_type)
 
         # Create the PoseEstimator & adjust its settings
         self.estimator = apriltag.apriltag_estimator.ApriltagEstimator(self.camera.calibration)
