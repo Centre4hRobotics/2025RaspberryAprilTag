@@ -12,5 +12,5 @@
     "field layout": "config/2026-rebuilt-andymark.json",
 
     "whitelist": null,
-    "blacklist": null
+    "blacklist": [1, 6, 7, 12, 17, 22, 23, 28]
 }

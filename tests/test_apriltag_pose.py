@@ -85,13 +85,14 @@ class TestApriltag:
 
         # 2. Run the math to convert the coordinates
         result_transform = tag.calculate_pose(estimator)
+        expected_cam_pose = tag.global_pose.transformBy(result_transform)
 
         # 3. Validation:
         # If the tag was 1 meter in front of the camera, then from the tag's
         # perspective, the camera is 1 meter away on the X-axis (Forward).
-        assert result_transform.X() == pytest.approx(camera_pose.X(), abs=0.01)
-        assert result_transform.Y() == pytest.approx(camera_pose.Y(), abs=0.01)
-        assert result_transform.Z() == pytest.approx(camera_pose.Z(), abs=0.01)
+        assert expected_cam_pose.X() == pytest.approx(camera_pose.X(), abs=0.01)
+        assert expected_cam_pose.Y() == pytest.approx(camera_pose.Y(), abs=0.01)
+        assert expected_cam_pose.Z() == pytest.approx(camera_pose.Z(), abs=0.01)
 
     @pytest.mark.parametrize(
         "tag_pose",
