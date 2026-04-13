@@ -36,30 +36,33 @@ def mock_tag(mock_camera):
     """ Creates a mock AprilTag at a fixed world position. """
     def _make(tag_pose: Pose3d, camera_pose: Pose3d, tag_id: int = 0):
 
-
         detection = MagicMock()
 
+        corners = tag_pose_to_corners(tag_pose)
         screen_corners = [
             list(world_to_cam_point(mock_camera.calibration.camera_intrinsics, camera_pose, corner))
-            for corner in tag_pose_to_corners(tag_pose)
+            for corner in corners
         ]
 
-        detection.getCorners.return_value = [
+        detection.getCorners.return_value = tuple([
             coord
             for corner in screen_corners
             for coord in corner
-        ]
+        ])
 
-        world_corners = [
+        ideal_corners = [
             [-1, 1],
             [1, 1],
             [1, -1],
             [-1, -1]
         ]
-        world_corners = numpy.array(world_corners, dtype=numpy.float32)
+
+        screen_corners.reverse()
+
+        ideal_corners = numpy.array(ideal_corners, dtype=numpy.float32)
         screen_corners = numpy.array(screen_corners, dtype=numpy.float32)
 
-        homography, _ = cv2.findHomography(world_corners, screen_corners)
+        homography = cv2.getPerspectiveTransform(ideal_corners, screen_corners)
         detection.getHomography.return_value = tuple(homography.flatten())
 
         detection.getId.return_value = tag_id
@@ -82,7 +85,6 @@ def world_to_cam_point(intrinsics, cam_pose: Pose3d, world_point: Translation3d)
 
     # Express world point in camera frame
     p_cam = cv_world_point - cv_cam_pose.translation()
-    p_cam = p_cam.rotateBy(-cv_cam_pose.rotation())
 
     X, Y, Z = p_cam.X(), p_cam.Y(), p_cam.Z()
 
@@ -106,8 +108,6 @@ def tag_pose_to_corners(pose: Pose3d) -> list[Translation3d]:
         Translation3d(0, -HALF_TAG, HALF_TAG) # top left
     ]
 
-    points = []
-    for i in range(4):
-        points.append((corner_offsets[i].rotateBy(pose.rotation()) + pose.translation()))
+    points = [corner_offset.rotateBy(pose.rotation()) + pose.translation() for corner_offset in corner_offsets]
 
     return points

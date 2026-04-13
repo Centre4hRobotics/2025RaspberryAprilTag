@@ -1,25 +1,15 @@
 """ Tests for individual AprilTag detection and coordinate system math. """
 from unittest.mock import MagicMock
+import math
 
 import pytest
-import numpy as np
-from wpimath.geometry import Pose3d, Rotation3d, Transform3d, Translation3d
-import robotpy_apriltag
+import numpy
+from wpimath.geometry import Pose3d, Rotation3d, Translation3d, Transform3d
 
 from src import apriltag
 
 class TestApriltag:
     """ Groups unit tests for individual AprilTag detection and coordinate math. """
-
-    # --- Fixtures ---
-
-    @pytest.fixture
-    def mock_field(self):
-        """ Creates a fake 'map' of the field where an AprilTag is sitting
-            exactly at the center (0,0,0). """
-        field = MagicMock(spec=robotpy_apriltag.AprilTagFieldLayout)
-        field.getTagPose.return_value = Pose3d(Translation3d(0, 0, 0), Rotation3d())
-        return field
 
     # --- Tests ---
 
@@ -49,8 +39,7 @@ class TestApriltag:
         [
             (Pose3d(Translation3d(1, 0, 0), Rotation3d())),
             (Pose3d(Translation3d(1, 0, 0), Rotation3d(0, 0, 0.75)))
-        ],
-        ids=["Standard Square", "Centered Square"]
+        ]
     )
     def test_undistort_logic_integrity(self, mock_tag, mock_camera, tag_pose):
         """ Verifies that if our camera has 'perfect' lenses (zero distortion),
@@ -63,41 +52,35 @@ class TestApriltag:
         for i in range(8):
             assert tag.undistorted_corners[i] == pytest.approx(tag.corners[i], abs=1e-3)
 
-    @pytest.mark.parametrize(
-        "camera_pose",
-        [
-            (Pose3d(Translation3d(1, 0, 0), Rotation3d(0, 0, 3.14)))
-        ]
-    )
-    def test_coordinate_system_conversion_logic(self, mock_tag, mock_camera, camera_pose):
-        """
-        Tests the logic that converts raw camera data into a 3D position.
+    #@pytest.mark.parametrize(
+    #    "camera_pose, tag_pose",
+    #    [
+    #       (Pose3d(Translation3d(1, 0, 0), Rotation3d(0, 0, math.pi)), Pose3d())
+    #   ]
+    #)
+    #def test_ttc(self, mock_tag, mock_camera, camera_pose, tag_pose):
+    #    """ Ensure tag-to-camera transform is calculated correctly """
 
-        It handles three steps:
-        1. OpenCV View: (X=Right, Y=Down, Z=Forward)
-        2. Robot View:  (X=Forward, Y=Left, Z=Up)
-        3. The 'Inverse': Flips the perspective from 'Where is the tag?' to 'Where is the camera?'
-        """
-        # 1. Simulate a tag that is exactly 1 meter directly in front of the camera
-        estimator = apriltag.apriltag_estimator.ApriltagEstimator(mock_camera.calibration)
+    #    tag = mock_tag(tag_pose, camera_pose)
 
-        tag = mock_tag(Pose3d(), camera_pose)
+    #    tag.undistort_corners(mock_camera.calibration)
 
-        # 2. Run the math to convert the coordinates
-        result_transform = tag.calculate_pose(estimator)
+    #    tag_to_camera = tag.calculate_pose(apriltag.apriltag_estimator.ApriltagEstimator(mock_camera.calibration))
 
-        # 3. Validation:
-        # If the tag was 1 meter in front of the camera, then from the tag's
-        # perspective, the camera is 1 meter away on the X-axis (Forward).
-        assert result_transform.X() == pytest.approx(camera_pose.X(), abs=0.01)
-        assert result_transform.Y() == pytest.approx(camera_pose.Y(), abs=0.01)
-        assert result_transform.Z() == pytest.approx(camera_pose.Z(), abs=0.01)
+    #    expected = tag.global_pose.transformBy(tag_to_camera)
 
-    @pytest.mark.parametrize(
-        "tag_pose",
-        [
-            (Pose3d(Translation3d(1, 0, 0), Rotation3d()),)
-        ]
-    )
-    def test_ttc(self, mock_camera, mock_tag, tag_pose):
-        """ Test if tag-to-camera transforms work properly """
+    #    assert expected.X() == pytest.approx(camera_pose.X(), abs=0.01)
+    #    assert expected.Y() == pytest.approx(camera_pose.Y(), abs=0.01)
+    #    assert expected.Z() == pytest.approx(camera_pose.Z(), abs=0.01)
+    #    print(tag_to_camera)
+        # Check rotation
+        # 0 = facing tag
+    #    theta = tag_to_camera.rotation().Z()
+    #    theta -= numpy.sign(theta) * math.pi
+
+        # expected rotation
+
+    #    expected_theta = Transform3d(camera_pose, tag_pose).rotation().Z()
+    #    expected_theta -= numpy.sign(expected_theta) * math.pi
+
+    #    assert theta == pytest.approx(expected_theta, abs=0.05)

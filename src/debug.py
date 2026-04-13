@@ -1,4 +1,4 @@
-""" Deal with debugging stuff (unused currently) """
+""" Wrap matplotlib stuff """
 
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator

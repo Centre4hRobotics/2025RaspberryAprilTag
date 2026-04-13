@@ -8,7 +8,7 @@ Each different camera, meaning each camera with a different sensor or lens, shou
 Each physical camera should have its own entry in `config/Settings.json`
 > Currently, multiple physical cameras are not supported.
 
-## Setting Up
+## Setup
 
 To set up the virtual environment, run `setup.sh`. It will create the virtual environment. The script assumes that it is being run on a system with Photonvision, and that the repo is in the home directory. If that is not true, you'll need to edit `/etc/systemd/system/rpivision.service` and change the path to `run.sh` to wherever it actually is.
 

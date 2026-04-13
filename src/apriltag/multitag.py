@@ -2,9 +2,10 @@
 
 import numpy
 import cv2
-from wpimath.geometry import Pose2d, Translation3d, Pose3d, Rotation3d, CoordinateSystem
+from wpimath.geometry import Pose2d, Translation3d, Pose3d, Rotation3d
 
-from src import apriltag, camera
+from src import camera, geometry
+from . import apriltag
 
 HALF_TAG = .5 * 6.5 * 25.4 * 1/1000 # 1/2 of tag size=(6.5" * 25.4mm/in * 1m/1000mm * 1/2)
 corner_offsets = [
@@ -24,7 +25,7 @@ def pose_from_vecs(rvec: cv2.typing.MatLike, tvec: cv2.typing.MatLike) -> Pose2d
     # Compose results into Transform3d
     inverse_transform = Pose3d(Translation3d(t_inv), Rotation3d(r_inv))
 
-    inverse_transform = CoordinateSystem.convert(inverse_transform, CoordinateSystem.EDN(), CoordinateSystem.NWU())
+    inverse_transform = geometry.convert_pose3d(inverse_transform, geometry.CoordinateSystem.EDN, geometry.CoordinateSystem.NWU)
 
     return inverse_transform.toPose2d()
 
@@ -45,10 +46,10 @@ def multi_tag_pose(
         if tag.global_pose:
             for i in range(4):
                 world_points.append(
-                    CoordinateSystem.convert(
+                    geometry.convert_translation3d(
                         (corner_offsets[i].rotateBy(tag.global_pose.rotation()) + tag.global_pose.translation()),
-                        CoordinateSystem.NWU(), # From
-                        CoordinateSystem.EDN()  # To
+                        geometry.CoordinateSystem.NWU, # From
+                        geometry.CoordinateSystem.EDN  # To
                     ).toVector()
                 )
                 screen_points.append([tag.corners[2 * i], tag.corners[2 * i + 1]])
@@ -65,20 +66,21 @@ def multi_tag_pose(
     distortion = numpy.array(cam.calibration.camera_distortion)
     intrinsics = numpy.array(cam.calibration.camera_intrinsics)
 
+    extrinsic_guess = rvec is not None and tvec is not None
+
     # SolvePnP call (duh)
     success, new_rvec, new_tvec = cv2.solvePnP(
         world_points,
         screen_points,
         intrinsics,
         distortion,
-        rvec=rvec.copy() if rvec is not None else None,
-        tvec=tvec.copy() if tvec is not None else None,
-        useExtrinsicGuess=(rvec is not None and tvec is not None),
+        rvec=rvec.copy() if extrinsic_guess else None,
+        tvec=tvec.copy() if extrinsic_guess else None,
+        useExtrinsicGuess=extrinsic_guess,
         flags=cv2.SOLVEPNP_ITERATIVE
     )
 
     if success:
-
         new_pose = pose_from_vecs(new_rvec, new_tvec)
 
         if rvec is not None and tvec is not None:

@@ -1,16 +1,12 @@
 """ Represent apriltags & allow operations on them """
 
-import math
-
 import numpy
 import robotpy_apriltag
-from wpimath.geometry import Rotation3d, Transform3d, CoordinateSystem
+from wpimath.geometry import Transform3d, Pose3d
 import cv2
 
-from src import camera
+from src import camera, geometry
 from . import apriltag_estimator
-
-flip_tag_rotation = Rotation3d(axis = (0, 1, 0), angle = math.pi)
 
 class Apriltag:
     """ Represent apriltag data """
@@ -77,19 +73,28 @@ class Apriltag:
             corners = self.undistorted_corners
         )
 
-        # Start by flipping the tag's rotation, to orient it as a viewer
-        cam_to_tag = Transform3d(
-            cam_to_tag.translation(),
-            cam_to_tag.rotation().rotateBy(flip_tag_rotation)
-        )
+        print(cam_to_tag)
 
-        # Change coordinate system from East/Down/North to a WPILib standard North/West/Up
-        cam_to_tag = CoordinateSystem.convert(cam_to_tag,
-            CoordinateSystem.EDN(),
-            CoordinateSystem.NWU()
-        )
+        cam_to_tag = geometry.convert_transform3d(
+            cam_to_tag,
+            geometry.CoordinateSystem.EDN,
+            geometry.CoordinateSystem.NWU
+        ).inverse()
+
+        #flip_tag_rotation = Rotation3d(0, 0, math.pi)
+
+        # Start by flipping the tag's rotation, to orient it as a viewer
+        #cam_to_tag = Transform3d(
+        #    cam_to_tag.translation(),
+        #    cam_to_tag.rotation().rotateBy(flip_tag_rotation)
+        #)
+
+        print(cam_to_tag)
+        tag_to_camera = cam_to_tag#.inverse()
+        print(tag_to_camera)
+        print(Pose3d().transformBy(tag_to_camera))
 
         # Convert the transformation from camera->tag to tag->camera
-        self.tag_to_camera = cam_to_tag.inverse()
+        self.tag_to_camera = tag_to_camera
 
         return self.tag_to_camera
