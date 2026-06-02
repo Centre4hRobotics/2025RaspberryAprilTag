@@ -33,15 +33,15 @@ class TestUtils:
             Pose3d(Translation3d(1, 0, 0), Rotation3d(0, 0, math.pi))
         ]
     )
-    def test_tag_corners(self, mock_tag, tag_pose):
+    def test_tag_corners(self, mock_camera, mock_tag, tag_pose):
         """ Ensure tag corners are within camera FOV """
         tag = mock_tag(tag_pose, Pose3d())
 
-        assert 0 <= tag.corners[0] <= 1280
-        assert 0 <= tag.corners[1] <= 800
-        assert 0 <= tag.corners[2] <= 1280
-        assert 0 <= tag.corners[3] <= 800
-        assert 0 <= tag.corners[4] <= 1280
-        assert 0 <= tag.corners[5] <= 800
-        assert 0 <= tag.corners[6] <= 1280
-        assert 0 <= tag.corners[7] <= 800
+        assert 0 <= tag.corners[0] <= mock_camera.calibration.x_res
+        assert 0 <= tag.corners[1] <= mock_camera.calibration.y_res
+        assert 0 <= tag.corners[2] <= mock_camera.calibration.x_res
+        assert 0 <= tag.corners[3] <= mock_camera.calibration.y_res
+        assert 0 <= tag.corners[4] <= mock_camera.calibration.x_res
+        assert 0 <= tag.corners[5] <= mock_camera.calibration.y_res
+        assert 0 <= tag.corners[6] <= mock_camera.calibration.x_res
+        assert 0 <= tag.corners[7] <= mock_camera.calibration.y_res

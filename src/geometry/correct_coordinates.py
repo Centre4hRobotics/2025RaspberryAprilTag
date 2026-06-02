@@ -15,7 +15,7 @@ def convert_translation3d(translation: Translation3d, from_: CoordinateSystem, t
 
     if from_ == CoordinateSystem.NWU and to == CoordinateSystem.EDN:
         return Translation3d(-translation.Y(), -translation.Z(), translation.X())
-    elif from_ == CoordinateSystem.EDN and to == CoordinateSystem.NWU:
+    if from_ == CoordinateSystem.EDN and to == CoordinateSystem.NWU:
         return Translation3d(translation.Z(), -translation.X(), -translation.Y())
     return translation
 
@@ -35,11 +35,10 @@ def convert_rotation3d(rotation: Rotation3d, from_: CoordinateSystem, to: Coordi
     if from_ == CoordinateSystem.NWU and to == CoordinateSystem.EDN:
         return Rotation3d(R @ q @ R_INV)
 
-    elif from_ == CoordinateSystem.EDN and to == CoordinateSystem.NWU:
+    if from_ == CoordinateSystem.EDN and to == CoordinateSystem.NWU:
         return Rotation3d(R_INV @ q @ R)
 
-    else:
-        return rotation
+    return rotation
 
 def convert_pose3d(pose: Pose3d, from_: CoordinateSystem, to: CoordinateSystem):
     """ Convert pose3d between coordinate systems """

@@ -1,10 +1,8 @@
 """ Tests for individual AprilTag detection and coordinate system math. """
 from unittest.mock import MagicMock
-import math
 
 import pytest
-import numpy
-from wpimath.geometry import Pose3d, Rotation3d, Translation3d, Transform3d
+from wpimath.geometry import Pose3d, Rotation3d, Translation3d
 
 from src import apriltag
 

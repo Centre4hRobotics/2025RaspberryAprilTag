@@ -66,7 +66,7 @@ class Apriltag:
         return (2 * self.detection.getCenter().x - x_res) / x_res
 
     def calculate_pose(self, estimator: apriltag_estimator.ApriltagEstimator) -> Transform3d:
-        """ Calculate the pose of the camera relative to the tag """
+        """ THIS DOES NOT WORK """
 
         cam_to_tag = estimator.pose_estimator.estimate(
             homography = self.detection.getHomography(),
