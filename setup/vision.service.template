@@ -5,7 +5,7 @@ StartLimitIntervalSec=5
 StartLimitBurst=15
 
 [Service]
-ExecStart=/home/photon/2025RaspberryAprilTag/run.sh
+ExecStart=@location@/run.sh
 Restart=on-failure
 RestartSec=0.1
 

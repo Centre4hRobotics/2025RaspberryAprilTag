@@ -1,6 +1,5 @@
 networktables.json
 *venv/
-.vscode/
 **/__pycache__/
 **.png
 calibration/generated_profile.json

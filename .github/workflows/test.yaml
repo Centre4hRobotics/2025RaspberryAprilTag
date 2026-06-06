@@ -4,7 +4,6 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   test:
@@ -31,12 +30,12 @@ jobs:
 
     - name: Setup testing environment
       run: |
-        chmod +x setup/setup_testing_env.sh
-        ./setup/setup_testing_env.sh
+        chmod +x setup/setup.sh
+        ./setup/setup.sh --testing
 
     - name: Run tests
       # --junitxml creates a report file
-      run: ./.venv/bin/python -m pytest --junitxml=results.xml
+      run: ./.venv/bin/python3 -m pytest --junitxml=results.xml
 
     - name: Upload test results
       if: always()
